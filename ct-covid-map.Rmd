@@ -12,36 +12,45 @@ output:
 ```{css echo=FALSE}
 
 h3  {
-
 	font-size: 100px;
-	
 }
 
 ```
 
 ```{r setup, include=FALSE}
 
-library(dplyr)
-library(readxl)
-library(stringr)
-library(forcats)
-library(here)
-
 library(flexdashboard)
 library(ggplot2)
-library(plotly)
-library(MetBrewer)
 library(FDBpub)
 
-theme_set(FDBpub::theme_fdbplot())
+theme_set(FDBpub::theme_fdbplot(base_size=10))
+
+theme_update(axis.text = element_blank(),
+             axis.ticks = element_blank(),
+             panel.grid = element_blank(),
+             panel.border = element_blank())
+
+knitr::opts_chunk$set(fig.width=7,
+                      fig.height=7/(16/9),
+                      fig.align = "center", ## horz center figs on page
+                      out.width="95%",
+                      out.height="95%", 
+                      dpi=if(doc_type()=="pdf") 300 else 200,
+                      dev=if(doc_type()=="pdf") "cairo_pdf" else "png", 
+                      dev.args=if(doc_type()=="pdf") NULL else list(type="cairo-png"),
+                      echo=FALSE,
+                      message=FALSE,
+                      warning=FALSE,
+                      include=TRUE,
+                      results='asis',
+                      cache=FALSE,
+                      cache.lazy=FALSE)
 
 ```
 
-```{r read-data}
-
+```{r workhorse, include=FALSE}
 
 source(here::here("ct-covid-map.R"))
-
 
 ```
 
@@ -49,7 +58,7 @@ source(here::here("ct-covid-map.R"))
 
 ## Column {data-width=750}
 
-### **GGplot
+### **GGplot**
 	
 ```{r ggplot}
 
@@ -61,13 +70,13 @@ map.positivity
 
 ### **Notes** 
 
-Put some notes here.
+This is a non-interactive map built with basic ggplot2 functions.
 
 # GGplotly
 
 ## Column {data-width=750}
 
-### **GGplot
+### **GGplot**
 	
 ```{r ggplotly}
 
@@ -79,7 +88,7 @@ map.positivity.ggplotly
 
 ### **Notes** 
 
-Put some notes here.
+This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. 
 
 # Plotly
 
@@ -131,13 +140,15 @@ Put some notes here.
 
 # About
 
-## Column {data-width=500}
+## Column {data-width=33}
 
 ### About the Maps
 
-Notes about the maps go here.
+Covid data for these figures was compiled by CT Dept. of Public Health through `r format(max(ct.covid$Date), "%b %d, %Y")` and accessed through https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library.
 
-## Column {data-width=250}
+Figures were created by David Braze (davebraze@gmail.com) using R statistical software and released under the Creative Commons v4.0 CC-by license.
+
+## Column {data-width=33}
 
 ### About the Author
 
@@ -147,7 +158,7 @@ David Braze is a researcher and consultant with a background in linguistics and 
 |   website: [davebraze.org](https://davebraze.org/ "D. Braze's website")
 
 
-## Column {data-width=250}
+## Column {data-width=33}
 
 ### About the Software
 

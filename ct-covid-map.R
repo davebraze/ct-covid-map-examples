@@ -7,21 +7,21 @@ library(readr)
 library(sf)
 library(RSocrata)
 
-library(tabulizer)
+## library(tabulizer)
 library(stringr)
 library(lubridate)
 library(wordstonumbers)
 library(forcats)
 library(dplyr)
 
-library(ggplot2)
+## library(ggplot2)
 library(ggpmisc)
-library(ggrepel)
-library(cowplot)
-library(kableExtra)
+## library(ggrepel)
+## library(cowplot)
+## library(kableExtra)
 library(plotly)
 library(htmlwidgets)
-library(FDBpub)
+## library(FDBpub)
 
 source(here::here("locals.R"))
 
@@ -171,18 +171,11 @@ ct.summary.wide <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
            probabledeathscum = as.integer(probabledeaths)) %>%
     select(-c(state, confirmeddeaths, probabledeaths, confirmedcases, probablecases), -starts_with("cases_"))
 
-## FIXME: this line should be redundant.
-## The pdfs have already been scanned at line 66, although with town.tab=TRUE.
-## tmp <- purrr::map_dfr(covid.fnames, read_ctcovid_pdf, town.tab=FALSE) %>%
-##     select(Date, tests.complete)
-
-## FIXME: RECOVER "covid" object from antecedent file
-
 tmp <- covid %>%
     select(Date, tests.complete) %>%
     distinct()
 
-ct.summary.wide <- left_join(ct.summary.wide, tmp) %>%
+ct.summary.wide <- left_join(ct.summary.wide, tmp, by="Date") %>%
     arrange(Date) %>%
     mutate(`Tests.0` = if_else(is.na(`Tests.0`), tests.complete, `Tests.0`)) %>%
     select(-tests.complete) %>%
@@ -196,25 +189,6 @@ ct.summary.wide <- left_join(ct.summary.wide, tmp) %>%
            ) ## Handful of x<0 after this. Let it be.
 
 
-#########################
-## constants for plots ##
-#########################
-caption.ctdph <- paste("Data Source: https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library.",
-                       "Figure by David Braze (davebraze@gmail.com) using R statistical software,",
-                       "Released under the Creative Commons v4.0 CC-by license.",
-                       sep="\n")
-
-## file names/types
-today <- strftime(today(), "%Y%m%d-")
-ftype <- "png"
-fig.path <- here::here("figures")
-
-## layout
-font.size  <- 10
-width <- 7
-height <- 7
-units <- "in"
-dpi <- 300
 ################################################
 ## map 10 day average Test Positivity by Town ##
 ################################################
@@ -238,13 +212,27 @@ if(FALSE) {
     ct.covid.positivity.0 %>%
         ggplot(aes(x=fct_reorder(Town, town.positivity), y=town.positivity)) +
         geom_point(aes(size=tests.10k), alpha=1/3) +
-        theme_fdbplot(font_size=font.size*.7) +
-        background_grid(major="xy") +
-        theme(legend.position="top",
-              plot.margin = unit(c(1,1,1,1), "lines"),
-              axis.text.x = element_text(angle=45, hjust=1))
+        background_grid(major="xy")
 
 }
+
+#########################
+## constants for plots ##
+#########################
+
+## file names/types
+today <- strftime(today(), "%Y%m%d-")
+fig.path <- here::here("figures")
+ftype  <- "png"
+## layout
+width <- 7
+height <- 7
+units <- "in"
+dpi <- 300
+
+###########################
+## choropleth via ggplot ##
+###########################
 
 ## ggplot::geom_sf
 breaks.0 <- c(0,2,4,6,8,10,12,14,16,18,20)
@@ -269,7 +257,7 @@ map.positivity <-
                                  "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
                                  "\nPopulation: ", formatC(pop.2010, format="d"),
                                  "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
-                 size=2, show.legend=FALSE) +
+                 size=1.5, show.legend=FALSE) +
     scale_color_manual(values=c("black", "white")) +
     viridis::scale_fill_viridis(option="magma",
                                 breaks=breaks.0,
@@ -277,16 +265,8 @@ map.positivity <-
     guides(fill=guide_colorbar(title="Test Positivity (%)",
                                title.vjust=1)) +
     labs(title=paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
-                     format(max(ct.covid$Date), "%b %d, %Y")),
-         subtitle=paste("Data compiled by CT Dept. of Public Health through",
-                        format(max(ct.covid$Date), "%B %d, %Y")),
-         caption=caption.ctdph) +
-    xlab(NULL) + ylab(NULL) +
-    theme_fdbplot(base_size=font.size) +
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          panel.grid = element_blank()
-          )
+                        format(max(ct.covid$Date), "%B %d, %Y"))) +
+    xlab(NULL) + ylab(NULL)
 
 ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
        plot=map.positivity,
@@ -296,8 +276,12 @@ ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
        units=units,
        dpi=dpi)
 
-## Make an interactive version ggplot::geom_sf >> plotly::ggplotly
-## This is pretty marginal. Here are a couple of tutorials that may
+
+###################################################
+## interactive choropleth via ggplot >> ggplotly ##
+###################################################
+
+## Here are a couple of tutorials that may
 ## help make better maps, although they're a bit dated:
 ## • https://blog.cpsievert.me/2018/03/30/visualizing-geo-spatial-data-with-sf-and-plotly/
 ## • https://plotly-r.com/maps.html
@@ -312,15 +296,13 @@ map.positivity.ggplotly <-
              layerData=2, ## default = 1
              tooltip=c("text")) %>%
     config(showTips=FALSE,
-           displayModeBar=FALSE ## hide plotly menubar
-           ## scrollZoom=FALSE     ## disable zooming? No.
+           displayModeBar=FALSE,  ## hide plotly menubar
+           scrollZoom=FALSE     ## disable zooming?
            ) %>%
-    hide_legend() ## %>%
-##    hide_colorbar()
+    hide_legend()
 
 fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
 saveWidget(map.positivity.ggplotly, file=fqfname)
-
 
 if(FALSE) {
 
