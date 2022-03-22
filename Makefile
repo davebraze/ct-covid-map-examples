@@ -4,7 +4,7 @@ rmd = $(fname).Rmd
 source = $(fname).R
 date := $(shell date "+%Y%m%d")
 
-.phoney: help tagfile flex html2web  publish nocache nopartials noreports clean
+.phoney: help tagfile plots flex html2web  publish nocache nopartials noreports clean
 ## Few targets correspond to files, so, list them here to ensure they always run.
 
 help:
@@ -29,7 +29,11 @@ tagfile:
 
 ### building reports
 
-flex: 
+plots: ct-covid-map.R
+# render figures
+	R $(R_OPTS) -e "source('"$(source)"')"
+
+flex: ct-covid-map.Rmd
 # render html document
 	R $(R_OPTS) -e "rmarkdown::render('"$(rmd)"', output_format='flexdashboard::flex_dashboard')"
 
