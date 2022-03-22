@@ -1,0 +1,16 @@
+## ignore these patterns in the root, but not subdirs
+/*.pdf
+/*.html
+/gtag.js
+
+## ignore these folders
+figures/*
+archive/*
+
+## ignore files matching these patterns everywhere
+*~
+*_cache
+*_files
+*.log
+*.md
+*.URL

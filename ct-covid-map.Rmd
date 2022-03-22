@@ -1,0 +1,169 @@
+---
+title: "CT COVID Map 3 Ways"
+author: David Braze
+  
+output: 
+  flexdashboard::flex_dashboard:
+    theme: yeti
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{css echo=FALSE}
+
+h3  {
+
+	font-size: 100px;
+	
+}
+
+```
+
+```{r setup, include=FALSE}
+
+library(dplyr)
+library(readxl)
+library(stringr)
+library(forcats)
+library(here)
+
+library(flexdashboard)
+library(ggplot2)
+library(plotly)
+library(MetBrewer)
+library(FDBpub)
+
+theme_set(FDBpub::theme_fdbplot())
+
+```
+
+```{r read-data}
+
+
+source(here::here("ct-covid-map.R"))
+
+
+```
+
+# GGplot
+
+## Column {data-width=750}
+
+### **GGplot
+	
+```{r ggplot}
+
+map.positivity
+
+```
+
+## Column {data-width=250}
+
+### **Notes** 
+
+Put some notes here.
+
+# GGplotly
+
+## Column {data-width=750}
+
+### **GGplot
+	
+```{r ggplotly}
+
+map.positivity.ggplotly
+
+```
+
+## Column {data-width=250}
+
+### **Notes** 
+
+Put some notes here.
+
+# Plotly
+
+## Column {data-width=750}
+ 
+### **Plotly** 
+
+```{r plotly}
+ 
+```
+
+## Column {data-width=250}
+
+### **Notes**
+
+Put some notes here.
+
+# Leaflet
+
+## Column {data-width=750}
+
+### **Leaflet** 
+
+```{r leaflet}
+
+```
+
+## Column {data-width=250}
+
+### **Notes**
+
+Put some notes here.
+
+# Mapbox
+
+## Column {data-width=750}
+
+### **Mapbox** 
+
+```{r mapbox}
+
+```
+
+## Column {data-width=250}
+
+### **Notes**
+
+Put some notes here.
+
+# About
+
+## Column {data-width=500}
+
+### About the Maps
+
+Notes about the maps go here.
+
+## Column {data-width=250}
+
+### About the Author
+
+David Braze is a researcher and consultant with a background in linguistics and reading research. He has more than 25 years experience investigating the cognitive foundations of language, literacy, and educational achievement, including 17 years as a Senior Research Scientist at [Haskins Laboratories](https://haskinslabs.org/). His research at Haskins, funded by the National Institutes of Health, emphasized the neurobiology of language and reading and applications to education. Dr. Braze consults widely for business, government, and non-profit sectors. 
+
+|   email: davebraze@gmail.com
+|   website: [davebraze.org](https://davebraze.org/ "D. Braze's website")
+
+
+## Column {data-width=250}
+
+### About the Software
+
+All data summaries in this dashboard were produced with the _R_ statistical environment, version `r paste(version$major, version$minor, sep=".")`. The dashboard itself was made using an Rmarkdown workflow. The following table lists the non-base R packages used in building the dashboard. To see a full citation for a specific package, assuming you have both _R_ and the particular package installed, call (e.g.) `citation("dplyr")` from the _R_ prompt. 
+
+```{r r-package-tab, include=TRUE}
+
+package_tab <-
+    sessioninfo::package_info() %>%
+    unclass() %>%
+    as_tibble() %>%
+    filter(attached == TRUE) %>%
+    select(package, ondiskversion, date) %>%
+    rename(version = ondiskversion)
+caption <- "R packages used in this dashboard."
+package_tab %>%
+    FDBpub::format_table(caption=caption, out_type=doc_type())
+
+```

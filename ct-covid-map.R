@@ -1,0 +1,337 @@
+library(httr)
+library(XML)
+library(here)
+library(fs)
+library(RCurl)
+library(readr)
+library(sf)
+library(RSocrata)
+
+library(tabulizer)
+library(stringr)
+library(lubridate)
+library(wordstonumbers)
+library(forcats)
+library(dplyr)
+
+library(ggplot2)
+library(ggpmisc)
+library(ggrepel)
+library(cowplot)
+library(kableExtra)
+library(plotly)
+library(htmlwidgets)
+library(FDBpub)
+
+source(here::here("locals.R"))
+
+#######################
+## load up map files ##
+#######################
+
+##### GIS data for CT is available here:
+## http://magic.lib.uconn.edu/connecticut_data.html
+##
+## Must first download the relevant shape files by hand, unzip them, and then load them up.
+## URL for town shape files is here: http://magic.lib.uconn.edu/magic_2/vector/37800/townct_37800_0000_2010_s100_census_1_shp.zip
+ct.shp <-
+    sf::st_read(here::here("02-shapefiles/CT/townct_37800_0000_2010_s100_census_1_shp/townct_37800_0000_2010_s100_census_1_shp/nad83",
+                           "townct_37800_0000_2010_s100_census_1_shp_nad83_feet.shp")) %>%
+    filter(NAME10 != "County subdivisions not defined") %>%
+    mutate(LAT = as.numeric(INTPTLAT10),
+           LON = as.numeric(INTPTLON10))
+
+#####################################
+## download CTDPH daily reports    ##
+#####################################
+
+## Manually download DPH daily reports at: https://portal.ct.gov/Coronavirus
+
+## TODO: look into writing routine to automate downloads.
+## example url for daily COVID-19 update from CT DPH looks like this
+## https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary3282020.pdf?la=en
+## Maybe use httr::modify_url to pass in different file names, as needed.
+
+## httr::parse_url("https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary3282020.pdf?la=en")
+
+#######################################
+## Extract info from CTDPH pdf files ##
+#######################################
+
+## get list of ctdph covid reports at hand
+covid.fnames <- fs::dir_ls(here::here("01-ctdph-daily-reports")) %>%
+    str_subset("CTDPHCOVID19summary[0-9]+.pdf")
+
+##### read available covid reports and scrape data from them
+##### this is necessary to get numbers for early part of the pandemic
+scrape.reports = FALSE
+town.tab <- TRUE
+if(scrape.reports) {
+    covid <- purrr::map_dfr(covid.fnames, read_ctcovid_pdf, town.tab=town.tab)
+    saveRDS(covid, file=here::here("03-other-source-data", "pdf-reports.rds"))
+} else {
+    covid <- readRDS(file=here::here("03-other-source-data", "pdf-reports.rds"))
+}
+
+##################################################
+## Use the Socrata API to access state DPH data ##
+##################################################
+
+## David Lucey points out that the data seem to be available more directly on the state's data
+## portal at: https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library
+
+## State data is accessed using the Socrata API. The R package
+## RSocrata:: package facilitates this.
+##
+## initial set up involves
+## 1. registering with https://opendata.socrata.com/login
+## 2. create an app_token to access the api via read.socrata()
+
+socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
+
+if(FALSE) {
+    url <- httr::parse_url("https://data.ct.gov/resource/28fr-iqnx.json")
+    url$path <- NULL
+    url <- httr::build_url(url)
+    D.ct <- RSocrata::ls.socrata(url)
+
+    D.covid <- D.ct %>%
+        filter(str_detect(.$title, "COVID"))
+
+}
+
+##### cases and deaths by town
+
+## Upon reviewing the data provided by CT on Nov. 1 2020, for the first time since mid-May, there
+## have been some changes to the variables in the Town data file. Need to sort that out before
+## pushing new data to the web. Metadata for the Town dataset can be found here
+## https://data.ct.gov/Health-and-Human-Services/COVID-19-Tests-Cases-and-Deaths-By-Town-/28fr-iqnx
+## OR https://data.ct.gov/resource/28fr-iqnx
+
+covid.api <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
+                          app_token=socrata.app.token) %>%
+    rename(Town = town,
+           town.cases = towntotalcases) %>%
+    mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
+           across(starts_with("people", ignore.case=FALSE), as.integer),
+           across(starts_with("number", ignore.case=FALSE), as.integer),
+           Date = as.Date(lastupdatedate))
+
+
+##### scrape town/county data from wikipedia
+
+########### FIXME: STASH THIS TABLE LOCALLY AND USE THAT UNLESS WP PAGE IS UPDATED #########
+url <- "https://en.wikipedia.org/wiki/List_of_towns_in_Connecticut"
+town.info <- GET(url) %>%
+    htmlParse() %>%
+    readHTMLTable(header=TRUE, which=2, skip=170) %>%
+    janitor::clean_names() %>%
+    select(-c(form_ofgovernment, native_americanname)) %>%
+    rename(year.est = dateestablished,
+           land.area.sq.miles = land_area_square_miles,
+           pop.2010 = population_in_2010_1,
+           pop.2020 = population_in_2020_1,
+           council.of.governments = council_of_governments) %>%
+    mutate(pop.2010 = as.integer(str_remove(pop.2010, ",")),
+           land.area.sq.miles = as.numeric(land.area.sq.miles),
+           county = str_replace(county, "County", "Co."),
+           pop.2010.bin = cut(pop.2010,
+                              breaks=c(0, 5000, 15000, 35000, 75000, Inf),
+                              labels=c("less than 5,000", "5k, <15k", "15k, <35k", "35k, <75k", "75,000 or more"),
+                              ordered_result=TRUE))
+
+## Merge shapes covid data
+ct.covid <-
+    covid.api %>%
+    left_join(town.info, by=c("Town" = "name")) %>%
+    mutate(town.cases.10k = (10000/pop.2010)*town.cases,
+           town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
+    left_join(ct.shp, by=c("Town" = "NAME10"))
+
+##### state wide counts
+## tests.complete info does not seem to be anywhere in any of the covid-19 data sets provided by the
+## state up until late May. The only way to get it is to extract it from their daily reports (pdf
+## files).
+
+ct.summary.wide <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
+                           app_token=socrata.app.token) %>%
+    rename(Date = date,
+           Cases.0 = totalcases,
+           Hospitalized.0 = hospitalizedcases,
+           Deaths.0 = totaldeaths,
+           `Tests.0` = covid_19_tests_reported) %>%
+    mutate(Date = as.Date(Date),
+           `Tests.0` = as.integer(`Tests.0`),
+           Cases.0 = as.integer(Cases.0),
+           Deaths.0 = as.integer(Deaths.0),
+           Hospitalized.0 = as.integer(Hospitalized.0),
+           confirmedcasescum = as.integer(confirmedcases),
+           probablecasescum = as.integer(probablecases),
+           confirmeddeathscum = as.integer(confirmeddeaths),
+           probabledeathscum = as.integer(probabledeaths)) %>%
+    select(-c(state, confirmeddeaths, probabledeaths, confirmedcases, probablecases), -starts_with("cases_"))
+
+## FIXME: this line should be redundant.
+## The pdfs have already been scanned at line 66, although with town.tab=TRUE.
+## tmp <- purrr::map_dfr(covid.fnames, read_ctcovid_pdf, town.tab=FALSE) %>%
+##     select(Date, tests.complete)
+
+## FIXME: RECOVER "covid" object from antecedent file
+
+tmp <- covid %>%
+    select(Date, tests.complete) %>%
+    distinct()
+
+ct.summary.wide <- left_join(ct.summary.wide, tmp) %>%
+    arrange(Date) %>%
+    mutate(`Tests.0` = if_else(is.na(`Tests.0`), tests.complete, `Tests.0`)) %>%
+    select(-tests.complete) %>%
+    mutate(Cases = c(NA, diff(Cases.0)),
+           Deaths = c(NA, diff(Deaths.0)),
+           `Tests Reported` = c(NA, diff(`Tests.0`)),
+           Hospitalized = Hospitalized.0,
+           `Test Positivity (percent)` = if_else(Date < as.Date("2020-07-01"),
+                                       as.numeric(NA),
+                                       Cases/`Tests Reported`*100)
+           ) ## Handful of x<0 after this. Let it be.
+
+
+#########################
+## constants for plots ##
+#########################
+caption.ctdph <- paste("Data Source: https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library.",
+                       "Figure by David Braze (davebraze@gmail.com) using R statistical software,",
+                       "Released under the Creative Commons v4.0 CC-by license.",
+                       sep="\n")
+
+## file names/types
+today <- strftime(today(), "%Y%m%d-")
+ftype <- "png"
+fig.path <- here::here("figures")
+
+## layout
+font.size  <- 10
+width <- 7
+height <- 7
+units <- "in"
+dpi <- 300
+################################################
+## map 10 day average Test Positivity by Town ##
+################################################
+
+## configure the data
+ct.covid.positivity.0 <-
+    ct.covid %>%
+    group_by(Town) %>%
+    slice_max(Date, n=11) %>% ## use 11 days instead of 10 so as to catch test count on 1st of 10 days of interest
+    mutate(ending.date = max(Date),
+           positive.sum = diff(range(numberofpositives)),
+           tests.sum = diff(range(numberoftests)),
+           tests.10k = tests.sum*(10000/pop.2010),
+           town.positivity = positive.sum/tests.sum*100) %>%
+    filter(Date == ending.date)
+
+
+if(FALSE) {
+
+    ## towns ranked by positivity rate
+    ct.covid.positivity.0 %>%
+        ggplot(aes(x=fct_reorder(Town, town.positivity), y=town.positivity)) +
+        geom_point(aes(size=tests.10k), alpha=1/3) +
+        theme_fdbplot(font_size=font.size*.7) +
+        background_grid(major="xy") +
+        theme(legend.position="top",
+              plot.margin = unit(c(1,1,1,1), "lines"),
+              axis.text.x = element_text(angle=45, hjust=1))
+
+}
+
+## ggplot::geom_sf
+breaks.0 <- c(0,2,4,6,8,10,12,14,16,18,20)
+shade.0 <- max(ct.covid.positivity.0$town.positivity)*.5
+
+map.positivity.cap <- paste("Ten Day Average Covid-19 Test Positivity for each Connecticut Town.",
+                            "Test Positivity is the percentage of tests administered in a town",
+                            "that had a positive result.")
+
+map.positivity <-
+    ct.covid.positivity.0 %>%
+    select(town.positivity, geometry, Town, pop.2010, tests.10k) %>%
+    ggplot() +
+    geom_sf(aes(fill=town.positivity,
+                geometry=geometry),
+            color="white", size=.33) +
+    geom_sf_text(aes(label=formatC(town.positivity, format="f", digits=2),
+                     geometry=geometry,
+                     color=town.positivity<shade.0,
+                     ## 'text' is used for the plotly tooltip
+                     text=paste0(Town,
+                                 "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+                                 "\nPopulation: ", formatC(pop.2010, format="d"),
+                                 "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
+                 size=2, show.legend=FALSE) +
+    scale_color_manual(values=c("black", "white")) +
+    viridis::scale_fill_viridis(option="magma",
+                                breaks=breaks.0,
+                                labels=breaks.0) +
+    guides(fill=guide_colorbar(title="Test Positivity (%)",
+                               title.vjust=1)) +
+    labs(title=paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
+                     format(max(ct.covid$Date), "%b %d, %Y")),
+         subtitle=paste("Data compiled by CT Dept. of Public Health through",
+                        format(max(ct.covid$Date), "%B %d, %Y")),
+         caption=caption.ctdph) +
+    xlab(NULL) + ylab(NULL) +
+    theme_fdbplot(base_size=font.size) +
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank()
+          )
+
+ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
+       plot=map.positivity,
+       path=fig.path,
+       device=ftype,
+       width=width, height=height,
+       units=units,
+       dpi=dpi)
+
+## Make an interactive version ggplot::geom_sf >> plotly::ggplotly
+## This is pretty marginal. Here are a couple of tutorials that may
+## help make better maps, although they're a bit dated:
+## • https://blog.cpsievert.me/2018/03/30/visualizing-geo-spatial-data-with-sf-and-plotly/
+## • https://plotly-r.com/maps.html
+##
+
+p0  <-
+    map.positivity +
+    theme(legend.position="top")
+
+map.positivity.ggplotly <-
+    ggplotly(p0,
+             layerData=2, ## default = 1
+             tooltip=c("text")) %>%
+    config(showTips=FALSE,
+           displayModeBar=FALSE ## hide plotly menubar
+           ## scrollZoom=FALSE     ## disable zooming? No.
+           ) %>%
+    hide_legend() ## %>%
+##    hide_colorbar()
+
+fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
+saveWidget(map.positivity.ggplotly, file=fqfname)
+
+
+if(FALSE) {
+
+    ## with leaflet
+    library(leaflet)
+
+    leaflet(ct.covid.positivity.0) %>%
+        addTiles() %>%
+        setView(-72.8, 41.5, 9) %>%
+        addPolygons(data=ct.shp)
+
+    glimpse(ct.covid.positivity.0)
+}
+

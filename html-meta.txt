@@ -1,0 +1,14 @@
+
+<meta name="description" content="Graphs of Connecticut DPH Covid-19 data.">
+<meta name="robots" content="index, follow">
+
+<!-- play with setting these properties for my site to see if there's anything useful here -->
+<!-- find a list of properties here: https://gist.github.com/lancejpollard/1978404 -->
+<!-- <meta property="og:url" content="https://www.ctcovid.com" /> -->
+<!-- <meta property="og:type" content="website" /> -->
+<!-- <meta property="og:title" content="Connecticut COVID-19 Case Tracker" /> -->
+<!-- <meta property="og:description" content="Track cases of COVID-19 (Coronavirus) in the State of Connecticut, including data from your local city or town." /> -->
+<!-- <meta property="og:image" content="https://davebraze.github.io/ct-covid19/preview.png" /> -->
+
+<!-- Would setting this help with figuring out how long visitors are staying on the page? -->
+<!-- <meta http-equiv = "refresh" content = "15" /> -->
