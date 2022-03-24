@@ -97,14 +97,16 @@ This is a plotly interactive map created by submitting the previous ggplot2 map 
 ### **Plotly** 
 
 ```{r plotly}
- 
+
+map.positivity.plotly
+
 ```
 
 ## Column {data-width=250}
 
 ### **Notes**
 
-Put some notes here.
+Interactive choropleth via plotly::plot_ly()
 
 # Leaflet
 

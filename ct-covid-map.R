@@ -285,7 +285,6 @@ ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
 ## help make better maps, although they're a bit dated:
 ## • https://blog.cpsievert.me/2018/03/30/visualizing-geo-spatial-data-with-sf-and-plotly/
 ## • https://plotly-r.com/maps.html
-##
 
 p0  <-
     map.positivity +
@@ -316,4 +315,45 @@ if(FALSE) {
 
     glimpse(ct.covid.positivity.0)
 }
+
+
+########################################
+## interactive choropleth with plot_ly ##
+########################################
+
+tmp0 <-
+    ct.covid.positivity.0 %>%
+    select(Town, town.positivity)
+
+tmp1 <-
+    ct.shp %>%
+    left_join(tmp0, by=c("NAME10" = "Town"))##  %>%
+    ## st_transform(4326)
+
+## st_crs(tmp1)
+
+map.positivity.plotly  <-
+    plot_ly() %>% ## plot_ly and plot_geo both get coordinate system off in different ways
+##    plot_geo() %>%
+    add_sf(
+        data=tmp1,
+        split=~NAME10,
+        text=~NAMELSAD10,
+        hoverinfo='text',
+        color=~town.positivity, ## defaults to viridis colorscale
+        alpha=1,
+        ## colorscale="BrBG", ## doesn't work to change colorscale. Why?
+        stroke=I("grey90")
+    ) %>%
+    hide_legend()
+
+
+#####################################################################################
+## Color scales built in to plotly are included in the RColorBrewer package.       ##
+## Any of the strings in brewer.pal.info can be used to set a plotly color scale.  ##
+## library("RColorBrewer")                                                         ##
+## brewer.pal.info                                                                 ##
+#####################################################################################
+
+
 
