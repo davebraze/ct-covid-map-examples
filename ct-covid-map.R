@@ -332,7 +332,7 @@ map.positivity.plotly  <-
         split=~NAME10,
         text=~NAMELSAD10,
         hoverinfo='text',
-        color=~town.positivity,         # defaults to viridis colorscale
+        color=~town.positivity,
         colors="magma",                 # set colorscale
         alpha=1,
         stroke=I("grey90")

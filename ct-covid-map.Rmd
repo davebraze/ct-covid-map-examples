@@ -70,7 +70,7 @@ map.positivity
 
 ### **Notes** 
 
-This is a non-interactive map built with basic ggplot2 functions.
+This is a non-interactive map built with basic ggplot2 functions. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L239).
 
 # GGplotly
 
@@ -88,7 +88,7 @@ map.positivity.ggplotly
 
 ### **Notes** 
 
-This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. 
+This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
 
 # Plotly
 
@@ -114,6 +114,8 @@ Interactive choropleth via plotly::plot_ly()
 
 ### **Leaflet** 
 
+Nothing here, yet.
+
 ```{r leaflet}
 
 ```
@@ -129,6 +131,8 @@ Put some notes here.
 ## Column {data-width=750}
 
 ### **Mapbox** 
+
+Nothing here, yet.
 
 ```{r mapbox}
 
