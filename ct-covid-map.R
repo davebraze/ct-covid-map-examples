@@ -25,6 +25,11 @@ library(htmlwidgets)
 
 source(here::here("locals.R"))
 
+##################################################
+## Intro to GIS and Spatial Analysis            ##
+## https://mgimond.github.io/Spatial/index.html ##
+##################################################
+
 #######################
 ## load up map files ##
 #######################
@@ -197,7 +202,7 @@ ct.summary.wide <- left_join(ct.summary.wide, tmp, by="Date") %>%
 ct.covid.positivity.0 <-
     ct.covid %>%
     group_by(Town) %>%
-    slice_max(Date, n=11) %>% ## use 11 days instead of 10 so as to catch test count on 1st of 10 days of interest
+    slice_max(Date, n=11) %>%           # use 11 days instead of 10 so as to catch test count on 1st of 10 days of interest
     mutate(ending.date = max(Date),
            positive.sum = diff(range(numberofpositives)),
            tests.sum = diff(range(numberoftests)),
@@ -244,20 +249,20 @@ map.positivity.cap <- paste("Ten Day Average Covid-19 Test Positivity for each C
 
 map.positivity <-
     ct.covid.positivity.0 %>%
-    select(town.positivity, geometry, Town, pop.2010, tests.10k) %>%
+    select(town.positivity, geometry, Town, pop.2010, tests.10k, LAT, LON) %>%
     ggplot() +
     geom_sf(aes(fill=town.positivity,
                 geometry=geometry),
             color="white", size=.33) +
-    geom_sf_text(aes(label=formatC(town.positivity, format="f", digits=2),
-                     geometry=geometry,
-                     color=town.positivity<shade.0,
-                     ## 'text' is used for the plotly tooltip
-                     text=paste0(Town,
-                                 "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-                                 "\nPopulation: ", formatC(pop.2010, format="d"),
-                                 "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
-                 size=1.5, show.legend=FALSE) +
+    geom_sf_text(aes(label="", geometry=geometry,
+                  ## label=formatC(town.positivity, format="f", digits=2),
+                  ## color=town.positivity<shade.0,
+                  ## 'text' is used for the plotly tooltip
+                  text=paste0(Town,
+                              "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+                              "\nPopulation: ", formatC(pop.2010, format="d"),
+                              "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
+              size=1.5, show.legend=FALSE) +
     scale_color_manual(values=c("black", "white")) +
     viridis::scale_fill_viridis(option="magma",
                                 breaks=breaks.0,
@@ -265,7 +270,7 @@ map.positivity <-
     guides(fill=guide_colorbar(title="Test Positivity (%)",
                                title.vjust=1)) +
     labs(title=paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
-                        format(max(ct.covid$Date), "%B %d, %Y"))) +
+                     format(max(ct.covid$Date), "%B %d, %Y"))) +
     xlab(NULL) + ylab(NULL)
 
 ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
@@ -295,13 +300,69 @@ map.positivity.ggplotly <-
              layerData=2, ## default = 1
              tooltip=c("text")) %>%
     config(showTips=FALSE,
-           displayModeBar=FALSE,  ## hide plotly menubar
-           scrollZoom=FALSE     ## disable zooming?
+           displayModeBar=FALSE,        # hide plotly menubar
+           scrollZoom=FALSE             # disable zooming?
            ) %>%
     hide_legend()
 
 fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
 saveWidget(map.positivity.ggplotly, file=fqfname)
+
+
+########################################
+## interactive choropleth with plot_ly ##
+########################################
+
+tmp0 <-
+    ct.covid.positivity.0 %>%
+    select(Town, town.positivity)
+
+
+tmp1 <-
+    ct.shp %>%
+    left_join(tmp0, by=c("NAME10" = "Town"))##  %>%
+    ## st_transform(4326)
+
+## st_crs(tmp1)
+
+map.positivity.plotly  <-
+    plot_ly() %>%                       # plot_ly and plot_geo both get coordinate system off in different ways
+    add_sf(
+        data=tmp1,
+        split=~NAME10,
+        text=~NAMELSAD10,
+        hoverinfo='text',
+        color=~town.positivity,         # defaults to viridis colorscale
+        colors="magma",                 # set colorscale
+        alpha=1,
+        stroke=I("grey90")
+    ) %>%
+    style(hoverlabel = list(
+              bgcolor = "black",        # this works
+              fontcolor = "yellow",     # has no effect
+              font_size = "16"          # no effect
+          )) %>%
+    hide_legend()
+
+## text=paste0(Town,
+##             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+##             "\nPopulation: ", formatC(pop.2010, format="d"),
+##             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
+
+
+#####################################################################################
+## Color scales built in to plotly are included in the RColorBrewer package.       ##
+## Any of the strings in brewer.pal.info can be used to set a plotly color scale.  ##
+## library("RColorBrewer")                                                         ##
+## brewer.pal.info                                                                 ##
+#####################################################################################
+
+
+
+#########################################
+## interactive choropleth with leaflet ##
+#########################################
+
 
 if(FALSE) {
 
@@ -315,45 +376,3 @@ if(FALSE) {
 
     glimpse(ct.covid.positivity.0)
 }
-
-
-########################################
-## interactive choropleth with plot_ly ##
-########################################
-
-tmp0 <-
-    ct.covid.positivity.0 %>%
-    select(Town, town.positivity)
-
-tmp1 <-
-    ct.shp %>%
-    left_join(tmp0, by=c("NAME10" = "Town"))##  %>%
-    ## st_transform(4326)
-
-## st_crs(tmp1)
-
-map.positivity.plotly  <-
-    plot_ly() %>% ## plot_ly and plot_geo both get coordinate system off in different ways
-##    plot_geo() %>%
-    add_sf(
-        data=tmp1,
-        split=~NAME10,
-        text=~NAMELSAD10,
-        hoverinfo='text',
-        color=~town.positivity, ## defaults to viridis colorscale
-        alpha=1,
-        ## colorscale="BrBG", ## doesn't work to change colorscale. Why?
-        stroke=I("grey90")
-    ) %>%
-    hide_legend()
-
-
-#####################################################################################
-## Color scales built in to plotly are included in the RColorBrewer package.       ##
-## Any of the strings in brewer.pal.info can be used to set a plotly color scale.  ##
-## library("RColorBrewer")                                                         ##
-## brewer.pal.info                                                                 ##
-#####################################################################################
-
-
-
