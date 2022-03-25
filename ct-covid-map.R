@@ -303,15 +303,15 @@ map.positivity.ggplotly <-
            displayModeBar=FALSE,        # hide plotly menubar
            scrollZoom=FALSE             # disable zooming?
            ) %>%
-    hide_legend()
+    hide_legend()                       # no effect
 
 fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
 saveWidget(map.positivity.ggplotly, file=fqfname)
 
 
-########################################
+#########################################
 ## interactive choropleth with plot_ly ##
-########################################
+#########################################
 
 tmp0 <-
     ct.covid.positivity.0 %>%
@@ -326,10 +326,10 @@ tmp1 <-
 ## st_crs(tmp1)
 
 map.positivity.plotly  <-
-    plot_ly() %>%                       # plot_ly and plot_geo both get coordinate system off in different ways
+    plot_ly() %>%                       # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
     add_sf(
         data=tmp1,
-        split=~NAME10,
+        split=~NAME10,                  # hover text seems determined by split variable
         text=~NAMELSAD10,
         hoverinfo='text',
         color=~town.positivity,
@@ -342,7 +342,7 @@ map.positivity.plotly  <-
               fontcolor = "yellow",     # has no effect
               font_size = "16"          # no effect
           )) %>%
-    hide_legend()
+    hide_legend()                       # plot doesn't show w/o this line, but legend still present
 
 ## text=paste0(Town,
 ##             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
