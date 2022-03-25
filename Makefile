@@ -29,17 +29,17 @@ tagfile:
 
 ### building reports
 
-plots: ct-covid-map.R
+plots: 
 # render figures
 	R $(R_OPTS) -e "source('"$(source)"')"
 
-flex: ct-covid-map.Rmd
+flex: 
 # render html document
 	R $(R_OPTS) -e "rmarkdown::render('"$(rmd)"', output_format='flexdashboard::flex_dashboard')"
 
 ### deploy report to web
 
-html2web:
+html2web: 
 # make html page suitable for web deployment & put it in '/docs/' folder
 	sed '/CT Achievement Gap: NAEP 4th Grade Reading Scores/ r gtag.js' < $(fname).html > tmp0.html ## insert google analytics tag
 	sed '/CT Achievement Gap: NAEP 4th Grade Reading Scores/ r html-meta.txt' < tmp0.html > index.html ## insert meta tags
