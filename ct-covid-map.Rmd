@@ -90,11 +90,11 @@ map.positivity.ggplotly
 
 This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
 
-# Plotly
+# Plot_ly
 
 ## Column {data-width=750}
  
-### **Plotly** 
+### **Plot_ly** 
 
 ```{r plotly}
 
@@ -106,7 +106,8 @@ map.positivity.plotly
 
 ### **Notes**
 
-Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/20e595d6555cead5cfbbd7ee75f5b07097db55ff/ct-covid-map.R#L313).
+Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/fec840cb5a8cb5298897ea62d1ddf496f33be333/ct-covid-map.R#L313)
+
 
 # Leaflet
 
