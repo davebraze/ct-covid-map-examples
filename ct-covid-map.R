@@ -317,7 +317,6 @@ tmp0 <-
     ct.covid.positivity.0 %>%
     select(Town, town.positivity, pop.2010, tests.10k)
 
-
 tmp1 <-
     ct.shp %>%
     left_join(tmp0, by=c("NAME10" = "Town")) %>%
@@ -325,10 +324,6 @@ tmp1 <-
             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
             "\nPopulation: ", formatC(pop.2010, format="d"),
             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
-
-
-
-## st_crs(tmp1)
 
 map.positivity.plotly  <-
     plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
@@ -356,7 +351,6 @@ map.positivity.plotly  <-
     colorbar(title = "<b>Test Positivity (%)</b>") %>%
     hide_legend()                       # plot doesn't show w/o this line
 
-
 #####################################################################################
 ## Color scales built in to plotly are included in the RColorBrewer package.       ##
 ## Any of the strings in brewer.pal.info can be used to set a plotly color scale.  ##
@@ -378,7 +372,7 @@ if(FALSE) {
 
     leaflet(ct.covid.positivity.0) %>%
         addTiles() %>%
-        s etView(-72.8, 41.5, 9) %>%
+        setView(-72.8, 41.5, 9) %>%
         addPolygons(data=ct.shp)
 
     glimpse(ct.covid.positivity.0)
