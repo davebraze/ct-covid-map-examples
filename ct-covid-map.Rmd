@@ -106,7 +106,8 @@ map.positivity.plotly
 
 ### **Notes**
 
-Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/bc677a1ad719d2ea2565c0ecfaf849ea9e0a8c27/ct-covid-map.R#L313)
+Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/fec840cb5a8cb5298897ea62d1ddf496f33be333/ct-covid-map.R#L313)
+
 
 # Leaflet
 
