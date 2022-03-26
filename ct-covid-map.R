@@ -328,6 +328,7 @@ tmp1 <-
 map.positivity.plotly  <-
     plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
             hoverinfo='text',
+            hoveron='fills',
             text=~text) %>%
     add_sf(
         split=~NAME10,                  # hover text seems determined by split variable
@@ -347,7 +348,8 @@ map.positivity.plotly  <-
                         x = 0,
                         xanchor = "left",
                         yanchor = "top",
-                        pad = list(b=10, l=10, r=10, t=10))) %>%
+                        margin = list(t=100),
+                        pad = list(b=10, l=10, r=10, t=100))) %>%
     colorbar(title = "<b>Test Positivity (%)</b>") %>%
     hide_legend()                       # plot doesn't show w/o this line
 
