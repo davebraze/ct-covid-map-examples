@@ -315,39 +315,46 @@ saveWidget(map.positivity.ggplotly, file=fqfname)
 
 tmp0 <-
     ct.covid.positivity.0 %>%
-    select(Town, town.positivity)
+    select(Town, town.positivity, pop.2010, tests.10k)
 
 
 tmp1 <-
     ct.shp %>%
-    left_join(tmp0, by=c("NAME10" = "Town"))##  %>%
-    ## st_transform(4326)
+    left_join(tmp0, by=c("NAME10" = "Town")) %>%
+    mutate(text=paste0(NAME10,
+            "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+            "\nPopulation: ", formatC(pop.2010, format="d"),
+            "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
+
+
 
 ## st_crs(tmp1)
 
 map.positivity.plotly  <-
-    plot_ly() %>%                       # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
+    plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
+            hoverinfo='text',
+            text=~text) %>%
     add_sf(
-        data=tmp1,
         split=~NAME10,                  # hover text seems determined by split variable
-        text=~NAMELSAD10,
-        hoverinfo='text',
         color=~town.positivity,
         colors="magma",                 # set colorscale
         alpha=1,
         stroke=I("grey90")
     ) %>%
-    style(hoverlabel = list(
-              bgcolor = "black",        # this works
-              fontcolor = "yellow",     # has no effect
-              font_size = "16"          # no effect
-          )) %>%
-    hide_legend()                       # plot doesn't show w/o this line, but legend still present
-
-## text=paste0(Town,
-##             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-##             "\nPopulation: ", formatC(pop.2010, format="d"),
-##             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
+    config(displayModeBar = FALSE) %>%
+    layout(hovermode = "closest",
+           hoverlabel = list(bgcolor="darkgreen",
+                             bordercolor="black",
+                             font=list(color="white", family = "Roboto Condensed", size=15)
+                             ),
+           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
+                                     format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
+                        x = 0,
+                        xanchor = "left",
+                        yanchor = "top",
+                        pad = list(b=10, l=10, r=10, t=10))) %>%
+    colorbar(title = "<b>Test Positivity (%)</b>") %>%
+    hide_legend()                       # plot doesn't show w/o this line
 
 
 #####################################################################################
@@ -371,7 +378,7 @@ if(FALSE) {
 
     leaflet(ct.covid.positivity.0) %>%
         addTiles() %>%
-        setView(-72.8, 41.5, 9) %>%
+        s etView(-72.8, 41.5, 9) %>%
         addPolygons(data=ct.shp)
 
     glimpse(ct.covid.positivity.0)
