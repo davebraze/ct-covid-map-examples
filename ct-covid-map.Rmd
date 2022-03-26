@@ -90,11 +90,11 @@ map.positivity.ggplotly
 
 This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
 
-# Plotly
+# Plot_ly
 
 ## Column {data-width=750}
  
-### **Plotly** 
+### **Plot_ly** 
 
 ```{r plotly}
 
