@@ -20,6 +20,7 @@ library(ggpmisc)
 ## library(cowplot)
 ## library(kableExtra)
 library(plotly)
+library(leaflet)
 library(htmlwidgets)
 ## library(FDBpub)
 
@@ -366,16 +367,24 @@ map.positivity.plotly  <-
 ## interactive choropleth with leaflet ##
 #########################################
 
+## May need to use geojsonio::sf_geojson() to convert the data file
 
-if(FALSE) {
+pal <- colorNumeric("magma", NULL)
 
-    ## with leaflet
-    library(leaflet)
+map.positivity.leaflet <-
+    leaflet(data=tmp1) %>%
+    ## addTiles(options=tileOptions(opacity=.5)) %>%
+    ## addTiles() %>%
+    addProviderTiles(providers$Thunderforest.Transport) %>%
+    setView(lng=-72.8, lat=41.5, zoom=9) %>%
+    addPolygons(color="blue",
+                fillColor = ~colorFactor("magma", COUNTYFP10),
+                ## fillColor = ~pal(town.positivity),
+                ## fillColor = ~colorNumeric("magma", town.positivity),
+                fillOpacity = .7,
+                label = ~text)
 
-    leaflet(ct.covid.positivity.0) %>%
-        addTiles() %>%
-        setView(-72.8, 41.5, 9) %>%
-        addPolygons(data=ct.shp)
+## leafletOptions()
+## tileOptions()
+## previewColors(colorNumeric("magma", 1:20), 1:20)
 
-    glimpse(ct.covid.positivity.0)
-}
