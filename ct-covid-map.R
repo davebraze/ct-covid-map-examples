@@ -4,6 +4,7 @@ library(here)
 library(fs)
 library(RCurl)
 library(readr)
+library(purrr)
 library(sf)
 library(RSocrata)
 
@@ -22,6 +23,7 @@ library(ggpmisc)
 library(plotly)
 library(leaflet)
 library(htmlwidgets)
+library(htmltools)
 ## library(FDBpub)
 
 source(here::here("locals.R"))
@@ -368,21 +370,43 @@ map.positivity.plotly  <-
 #########################################
 
 ## May need to use geojsonio::sf_geojson() to convert the data file
+## or get gis data from some other source
+
+## Read geojson file with sf::st_read()
+
+D <- st_read(here::here("02-geojson", "ct-towns.geojson"))
+
+tmp1 <-
+    ct.covid.positivity.0 %>%
+    select(Town, town.positivity, pop.2010, tests.10k)
+
+D <- left_join(D, tmp1, by=c("name" = "Town")) %>%
+    mutate(text=map(paste(name,
+            paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
+            paste0("Population: ", formatC(pop.2010, format="d")),
+            paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
+            sep="<br>"),
+            htmltools::HTML))
 
 pal <- colorNumeric("magma", NULL)
 
 map.positivity.leaflet <-
-    leaflet(data=tmp1) %>%
+    leaflet(data=D) %>%
     ## addTiles(options=tileOptions(opacity=.5)) %>%
     ## addTiles() %>%
-    addProviderTiles(providers$Thunderforest.Transport) %>%
+    ## addProviderTiles(providers$Thunderforest.Transport) %>%
     setView(lng=-72.8, lat=41.5, zoom=9) %>%
-    addPolygons(color="blue",
-                fillColor = ~colorFactor("magma", COUNTYFP10),
-                ## fillColor = ~pal(town.positivity),
-                ## fillColor = ~colorNumeric("magma", town.positivity),
-                fillOpacity = .7,
-                label = ~text)
+    addPolygons(color="lightgrey",      # stroke color
+                stroke = TRUE,
+                weight = 1.5,           # stroke
+                fillColor = ~pal(town.positivity),
+                fillOpacity = 1,
+                label = ~text,
+                labelOptions = labelOptions(textsize = "15px", ## could also set "font-size" in 'style' arg
+                                            style = list( # add custom CSS
+                                                "background-color" = "darkgreen",
+                                                "color" = "white" # font color
+                                            )))
 
 ## leafletOptions()
 ## tileOptions()
