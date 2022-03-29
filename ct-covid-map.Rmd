@@ -90,6 +90,8 @@ map.positivity.ggplotly
 
 This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
 
+I don't care for how the tooltips only deploy when the mouse approaches the center of a polygon. It should pop up when the mouse is over any part of a polygon.
+
 # Plot_ly
 
 ## Column {data-width=750}
@@ -108,6 +110,7 @@ map.positivity.plotly
 
 Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/fec840cb5a8cb5298897ea62d1ddf496f33be333/ct-covid-map.R#L313)
 
+There is something odd going on with the aspect ratio. I'm guessing it is to do with how the coordinate system in the shape file is being interpreted. The really strange thing is that I'm using the same shape file here as for the ggplotly map. Whatever the cause, it needs to be fixed.
 
 # Leaflet
 
@@ -130,6 +133,8 @@ map.positivity.leaflet
 Interactive choropleth via leaflet::leaflet(). See code [here](). 
 
 Previous plots in this series used multipolygon shapes for towns taken from conventional shape files. I couldn't get that to work with leaflet and so switched to simple polygons. These were read from geojson files, but I think the crucial difference is multipolygon vs. somple polygons. 
+
+I don't know why the colorscale in the legend is inverted. Needs to be fixed.
 
 # Mapbox
 
