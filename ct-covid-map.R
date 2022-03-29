@@ -406,7 +406,14 @@ map.positivity.leaflet <-
                                             style = list( # add custom CSS
                                                 "background-color" = "darkgreen",
                                                 "color" = "white" # font color
-                                            )))
+                                            ))) %>%
+    addLegend(
+        "bottomright",
+        pal = pal,
+        values = ~town.positivity,
+        title = "<b>Test Positivity (%)</b>",
+        opacity = 1
+    )
 
 ## leafletOptions()
 ## tileOptions()
