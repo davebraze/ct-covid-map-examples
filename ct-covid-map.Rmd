@@ -119,13 +119,17 @@ Nothing here, yet.
 
 ```{r leaflet}
 
+map.positivity.leaflet
+
 ```
 
 ## Column {data-width=250}
 
 ### **Notes**
 
-Put some notes here.
+Interactive choropleth via leaflet::leaflet(). See code [here](). 
+
+Previous plots in this series used multipolygon shapes for towns taken from conventional shape files. I couldn't get that to work with leaflet and so switched to simple polygons. These were read from geojson files, but I think the crucial difference is multipolygon vs. somple polygons. 
 
 # Mapbox
 
