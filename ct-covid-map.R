@@ -381,7 +381,8 @@ tmp1 <-
     select(Town, town.positivity, pop.2010, tests.10k)
 
 D <- left_join(D, tmp1, by=c("name" = "Town")) %>%
-    mutate(text=map(paste(name,
+    mutate(text=map(paste(
+               paste0("<b>", name, "</b>"),
             paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
             paste0("Population: ", formatC(pop.2010, format="d")),
             paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
@@ -411,9 +412,12 @@ map.positivity.leaflet <-
         "bottomright",
         pal = pal,
         values = ~town.positivity,
+        ##        labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
         title = "<b>Test Positivity (%)</b>",
         opacity = 1
-    )
+    ) %>%
+    addTitle(paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns for period ending",
+                    format(max(ct.covid$Date), "%B %d, %Y")))
 
 ## leafletOptions()
 ## tileOptions()

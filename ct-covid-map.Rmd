@@ -118,7 +118,7 @@ There is something odd going on with the aspect ratio. I'm guessing it is to do 
 
 ### **Leaflet** 
 
-Nothing here, yet.
+`r paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending", format(max(ct.covid$Date), "%B %d, %Y"))`
 
 ```{r leaflet}
 
@@ -135,6 +135,8 @@ Interactive choropleth via leaflet::leaflet(). See code [here]().
 Previous plots in this series used multipolygon shapes for towns taken from conventional shape files. I couldn't get that to work with leaflet and so switched to simple polygons. These were read from geojson files, but I think the crucial difference is multipolygon vs. somple polygons. 
 
 I don't know why the colorscale in the legend is inverted. Needs to be fixed.
+
+There doesn't seem to be a way to add a title, as such, to a leaflet map.
 
 # Mapbox
 
