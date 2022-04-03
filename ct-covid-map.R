@@ -23,7 +23,7 @@ library(htmltools)
 ## library(FDBpub)
 
 
-source(here::here("locals.R"))
+source(here("locals.R"))
 
 ##################################################
 ## Intro to GIS and Spatial Analysis            ##
@@ -40,7 +40,7 @@ source(here::here("locals.R"))
 ## Must first download the relevant shape files by hand, unzip them, and then load them up.
 ## URL for town shape files is here: http://magic.lib.uconn.edu/magic_2/vector/37800/townct_37800_0000_2010_s100_census_1_shp.zip
 ct.shp <-
-    sf::st_read(here::here("02-shapefiles/CT/townct_37800_0000_2010_s100_census_1_shp/townct_37800_0000_2010_s100_census_1_shp/nad83",
+    sf::st_read(here("02-shapefiles/CT/townct_37800_0000_2010_s100_census_1_shp/townct_37800_0000_2010_s100_census_1_shp/nad83",
                            "townct_37800_0000_2010_s100_census_1_shp_nad83_feet.shp")) %>%
     filter(NAME10 != "County subdivisions not defined") %>%
     mutate(LAT = as.numeric(INTPTLAT10),
@@ -48,7 +48,7 @@ ct.shp <-
 
 
 ##### read data previously extracted from CTDPH pdf files
-covid <- readRDS(file=here::here("03-other-source-data", "pdf-reports.rds"))
+covid <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
 
 ##################################################
 ## Use the Socrata API to access state DPH data ##
@@ -182,7 +182,7 @@ if(FALSE) {
 
 ## file names/types
 today <- strftime(today(), "%Y%m%d-")
-fig.path <- here::here("figures")
+fig.path <- here("figures")
 ftype  <- "png"
 ## layout
 width <- 7
@@ -338,7 +338,7 @@ map.positivity.plotly  <-
 
 ## Read geojson file with sf::st_read()
 
-D <- st_read(here::here("02-geojson", "ct-towns.geojson"))
+D <- st_read(here("02-geojson", "ct-towns.geojson"))
 
 tmp1 <-
     ct.covid.positivity.0 %>%
