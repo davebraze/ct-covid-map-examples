@@ -1,7 +1,7 @@
 ---
 title: "CT COVID Map: Variations"
 author: David Braze
-  
+
 output: 
   flexdashboard::flex_dashboard:
     theme: yeti
@@ -76,7 +76,7 @@ This is a non-interactive map built with basic ggplot2 functions. See code [here
 
 ## Column {data-width=750}
 
-### **GGplot**
+### **GGplotly**
 	
 ```{r ggplotly}
 
@@ -136,25 +136,7 @@ Previous plots in this series used multipolygon shapes for towns taken from conv
 
 I don't know why the colorscale in the legend is inverted. Needs to be fixed.
 
-There doesn't seem to be a way to add a title, as such, to a leaflet map.
-
-# Mapbox
-
-## Column {data-width=750}
-
-### **Mapbox** 
-
-Nothing here, yet.
-
-```{r mapbox}
-
-```
-
-## Column {data-width=250}
-
-### **Notes**
-
-Put some notes here.
+Leaflet maps don't provide a "title" feature, as such. Here, I've just added the title text above the map. Could use some basic formatting.
 
 # About
 
