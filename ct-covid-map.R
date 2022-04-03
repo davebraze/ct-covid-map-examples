@@ -8,7 +8,6 @@ library(purrr)
 library(sf)
 library(RSocrata)
 
-## library(tabulizer)
 library(stringr)
 library(lubridate)
 library(wordstonumbers)
@@ -17,9 +16,6 @@ library(dplyr)
 
 ## library(ggplot2)
 library(ggpmisc)
-## library(ggrepel)
-## library(cowplot)
-## library(kableExtra)
 library(plotly)
 library(leaflet)
 library(htmlwidgets)
@@ -58,28 +54,7 @@ covid <- readRDS(file=here::here("03-other-source-data", "pdf-reports.rds"))
 ## Use the Socrata API to access state DPH data ##
 ##################################################
 
-## David Lucey points out that the data seem to be available more directly on the state's data
-## portal at: https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library
-
-## State data is accessed using the Socrata API. The R package
-## RSocrata:: package facilitates this.
-##
-## initial set up involves
-## 1. registering with https://opendata.socrata.com/login
-## 2. create an app_token to access the api via read.socrata()
-
 socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
-
-if(FALSE) {
-    url <- httr::parse_url("https://data.ct.gov/resource/28fr-iqnx.json")
-    url$path <- NULL
-    url <- httr::build_url(url)
-    D.ct <- RSocrata::ls.socrata(url)
-
-    D.covid <- D.ct %>%
-        filter(str_detect(.$title, "COVID"))
-
-}
 
 ##### cases and deaths by town
 
@@ -102,24 +77,34 @@ covid.api <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
 ##### scrape town/county data from wikipedia
 
 ########### FIXME: STASH THIS TABLE LOCALLY AND USE THAT UNLESS WP PAGE IS UPDATED #########
-url <- "https://en.wikipedia.org/wiki/List_of_towns_in_Connecticut"
-town.info <- GET(url) %>%
-    htmlParse() %>%
-    readHTMLTable(header=TRUE, which=2, skip=170) %>%
-    janitor::clean_names() %>%
-    select(-c(form_ofgovernment, native_americanname)) %>%
-    rename(year.est = dateestablished,
-           land.area.sq.miles = land_area_square_miles,
-           pop.2010 = population_in_2010_1,
-           pop.2020 = population_in_2020_1,
-           council.of.governments = council_of_governments) %>%
-    mutate(pop.2010 = as.integer(str_remove(pop.2010, ",")),
-           land.area.sq.miles = as.numeric(land.area.sq.miles),
-           county = str_replace(county, "County", "Co."),
-           pop.2010.bin = cut(pop.2010,
-                              breaks=c(0, 5000, 15000, 35000, 75000, Inf),
-                              labels=c("less than 5,000", "5k, <15k", "15k, <35k", "35k, <75k", "75,000 or more"),
-                              ordered_result=TRUE))
+
+if (FALSE) {
+    url <- "https://en.wikipedia.org/wiki/List_of_towns_in_Connecticut"
+    town.info <- GET(url) %>%
+        htmlParse() %>%
+        readHTMLTable(header=TRUE, which=2, skip=170) %>%
+        janitor::clean_names() %>%
+        select(-c(form_ofgovernment, native_americanname)) %>%
+        rename(year.est = dateestablished,
+               land.area.sq.miles = land_area_square_miles,
+               pop.2010 = population_in_2010_1,
+               pop.2020 = population_in_2020_1,
+               council.of.governments = council_of_governments) %>%
+        mutate(pop.2010 = as.integer(str_remove(pop.2010, ",")),
+               land.area.sq.miles = as.numeric(land.area.sq.miles),
+               county = str_replace(county, "County", "Co."),
+               pop.2010.bin = cut(pop.2010,
+                                  breaks=c(0, 5000, 15000, 35000, 75000, Inf),
+                                  labels=c("less than 5,000", "5k, <15k", "15k, <35k", "35k, <75k", "75,000 or more"),
+                                  ordered_result=TRUE))
+
+    saveRDS(town.info, file = here("03-other-source-data", "town-info.rds"))
+
+} else {
+
+    town.info <- readRDS(file = here("03-other-source-data", "town-info.rds"))
+
+}
 
 ## Merge shapes covid data
 ct.covid <-
