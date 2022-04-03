@@ -50,37 +50,9 @@ ct.shp <-
     mutate(LAT = as.numeric(INTPTLAT10),
            LON = as.numeric(INTPTLON10))
 
-#####################################
-## download CTDPH daily reports    ##
-#####################################
 
-## Manually download DPH daily reports at: https://portal.ct.gov/Coronavirus
-
-## TODO: look into writing routine to automate downloads.
-## example url for daily COVID-19 update from CT DPH looks like this
-## https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary3282020.pdf?la=en
-## Maybe use httr::modify_url to pass in different file names, as needed.
-
-## httr::parse_url("https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary3282020.pdf?la=en")
-
-#######################################
-## Extract info from CTDPH pdf files ##
-#######################################
-
-## get list of ctdph covid reports at hand
-covid.fnames <- fs::dir_ls(here::here("01-ctdph-daily-reports")) %>%
-    str_subset("CTDPHCOVID19summary[0-9]+.pdf")
-
-##### read available covid reports and scrape data from them
-##### this is necessary to get numbers for early part of the pandemic
-scrape.reports = FALSE
-town.tab <- TRUE
-if(scrape.reports) {
-    covid <- purrr::map_dfr(covid.fnames, read_ctcovid_pdf, town.tab=town.tab)
-    saveRDS(covid, file=here::here("03-other-source-data", "pdf-reports.rds"))
-} else {
-    covid <- readRDS(file=here::here("03-other-source-data", "pdf-reports.rds"))
-}
+##### read data previously extracted from CTDPH pdf files
+covid <- readRDS(file=here::here("03-other-source-data", "pdf-reports.rds"))
 
 ##################################################
 ## Use the Socrata API to access state DPH data ##
