@@ -26,6 +26,7 @@ library(htmlwidgets)
 library(htmltools)
 ## library(FDBpub)
 
+
 source(here::here("locals.R"))
 
 ##################################################
@@ -196,11 +197,6 @@ ct.summary.wide <- left_join(ct.summary.wide, tmp, by="Date") %>%
                                        Cases/`Tests Reported`*100)
            ) ## Handful of x<0 after this. Let it be.
 
-
-################################################
-## map 10 day average Test Positivity by Town ##
-################################################
-
 ## configure the data
 ct.covid.positivity.0 <-
     ct.covid %>%
@@ -224,9 +220,8 @@ if(FALSE) {
 
 }
 
-#########################
-## constants for plots ##
-#########################
+
+##### constants for ggplot
 
 ## file names/types
 today <- strftime(today(), "%Y%m%d-")
@@ -261,7 +256,7 @@ map.positivity <-
                   ## label=formatC(town.positivity, format="f", digits=2),
                   ## color=town.positivity<shade.0,
                   ## 'text' is used for the plotly tooltip
-                  text=paste0(Town,
+                  text=paste0("<b>", Town, "</b>",
                               "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
                               "\nPopulation: ", formatC(pop.2010, format="d"),
                               "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
@@ -272,7 +267,7 @@ map.positivity <-
                                 labels=breaks.0) +
     guides(fill=guide_colorbar(title="Test Positivity (%)",
                                title.vjust=1)) +
-    labs(title=paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
+    labs(title=paste("10 Day Average Covid-19 Test Positivity\nin Connecticut Towns\nfor period ending",
                      format(max(ct.covid$Date), "%B %d, %Y"))) +
     xlab(NULL) + ylab(NULL)
 
@@ -306,6 +301,18 @@ map.positivity.ggplotly <-
            displayModeBar=FALSE,        # hide plotly menubar
            scrollZoom=FALSE             # disable zooming?
            ) %>%
+    layout(hovermode = "closest",
+           hoverlabel = list(bgcolor="darkgreen",
+                             bordercolor="black",
+                             font=list(color="white", family="sans-serif", size=15)
+                             ),
+           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\nin Connecticut Towns\nfor period ending",
+                                     format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
+                        x = 0,
+                        xanchor = "left",
+                        yanchor = "top",
+                        margin = list(t=100),
+                        pad = list(b=10, l=10, r=10, t=100))) %>%
     hide_legend()                       # no effect
 
 fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
@@ -323,7 +330,7 @@ tmp0 <-
 tmp1 <-
     ct.shp %>%
     left_join(tmp0, by=c("NAME10" = "Town")) %>%
-    mutate(text=paste0(NAME10,
+    mutate(text=paste0("<b>", NAME10, "</b>",
             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
             "\nPopulation: ", formatC(pop.2010, format="d"),
             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
@@ -344,9 +351,9 @@ map.positivity.plotly  <-
     layout(hovermode = "closest",
            hoverlabel = list(bgcolor="darkgreen",
                              bordercolor="black",
-                             font=list(color="white", family = "Roboto Condensed", size=15)
+                             font=list(color="white", family = "sans-serif", size=15)
                              ),
-           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending",
+           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\nin Connecticut Towns\nfor period ending",
                                      format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
                         x = 0,
                         xanchor = "left",
@@ -393,9 +400,6 @@ pal <- colorNumeric("magma", NULL)
 
 map.positivity.leaflet <-
     leaflet(data=D) %>%
-    ## addTiles(options=tileOptions(opacity=.5)) %>%
-    ## addTiles() %>%
-    ## addProviderTiles(providers$Thunderforest.Transport) %>%
     setView(lng=-72.8, lat=41.5, zoom=9) %>%
     addPolygons(color="lightgrey",      # stroke color
                 stroke = TRUE,
@@ -412,14 +416,10 @@ map.positivity.leaflet <-
         "bottomright",
         pal = pal,
         values = ~town.positivity,
-        ##        labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
         title = "<b>Test Positivity (%)</b>",
         opacity = 1
-    ) %>%
-    addTitle(paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns for period ending",
-                    format(max(ct.covid$Date), "%B %d, %Y")))
+    )
 
 ## leafletOptions()
 ## tileOptions()
 ## previewColors(colorNumeric("magma", 1:20), 1:20)
-
