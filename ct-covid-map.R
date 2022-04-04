@@ -285,17 +285,35 @@ saveWidget(map.positivity.ggplotly, file=fqfname)
 ## interactive choropleth with plot_ly ##
 #########################################
 
-tmp0 <-
+
+tmp1 <-
     ct.covid.positivity.0 %>%
     select(Town, town.positivity, pop.2010, tests.10k)
 
-tmp1 <-
-    D.shape %>%
-    left_join(tmp0, by=c("NAME10" = "Town")) %>%
-    mutate(text=paste0("<b>", NAME10, "</b>",
-            "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-            "\nPopulation: ", formatC(pop.2010, format="d"),
-            "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
+tmp1 <- left_join(D.geojson, tmp1, by=c("name" = "Town")) %>%
+    mutate(text=paste0("<b>", name, "</b>",
+                       "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+                       "\nPopulation: ", formatC(pop.2010, format="d"),
+                       "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
+## mutate(text=map(paste(
+##            paste0("<b>", name, "</b>"),
+##         paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
+##         paste0("Population: ", formatC(pop.2010, format="d")),
+##         paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
+##         sep="<br>"),
+##         htmltools::HTML))
+
+## tmp0 <-
+##     ct.covid.positivity.0 %>%
+##     select(Town, town.positivity, pop.2010, tests.10k)
+
+## tmp1 <-
+##     D.shape %>%
+##     left_join(tmp0, by=c("NAME10" = "Town")) %>%
+##     mutate(text=paste0("<b>", NAME10, "</b>",
+##             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+##             "\nPopulation: ", formatC(pop.2010, format="d"),
+##             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
 
 map.positivity.plotly  <-
     plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
@@ -303,7 +321,7 @@ map.positivity.plotly  <-
             hoveron='fills',
             text=~text) %>%
     add_sf(
-        split=~NAME10,                  # hover text seems determined by split variable
+        split=~name,                  # hover text seems determined by split variable
         color=~town.positivity,
         colors="magma",                 # set colorscale
         alpha=1,
@@ -338,10 +356,7 @@ map.positivity.plotly  <-
 ## interactive choropleth with leaflet ##
 #########################################
 
-## May need to use geojsonio::sf_geojson() to convert the data file
-## or get gis data from some other source
-
-## Read geojson file with sf::st_read()
+## Use geojson with leaflet, not shapefiles. Shapefiles don't work with leaflet.
 
 tmp1 <-
     ct.covid.positivity.0 %>%

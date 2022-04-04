@@ -72,6 +72,8 @@ map.positivity
 
 This is a non-interactive map built with basic ggplot2 functions. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L239).
 
+I am using a shapefile-based set of multipolygons for the town outlines. These are probably higher resolution than needed. It might be possible to reduce size (and load time) of the dashboard if I switched to the lower resolution geojson-based polygons that I'm using with leaflet.
+
 # GGplotly
 
 ## Column {data-width=750}
@@ -110,7 +112,7 @@ map.positivity.plotly
 
 Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/fec840cb5a8cb5298897ea62d1ddf496f33be333/ct-covid-map.R#L313)
 
-There is something odd going on with the aspect ratio. I'm guessing it is to do with how the coordinate system in the shape file is being interpreted. The really strange thing is that I'm using the same shape file here as for the ggplotly map. Whatever the cause, it needs to be fixed.
+I'm using  a geojson-based set of polygons for town outlines in this map. Plot_ly() gets the aspect ratio wrong if using the shapefile-based set of multipolygons that I used with ggplot() and ggplotly() maps. I'm not sure why.
 
 # Leaflet
 
