@@ -47,7 +47,9 @@ D.shape <-
     mutate(LAT = as.numeric(INTPTLAT10),
            LON = as.numeric(INTPTLON10))
 
-## Read geojson file including outlines of connecticut towns. I need to chase down where I got it.
+## Read geojson file including outlines of connecticut towns.
+## File downloaded from here: https://github.com/HandsOnDataViz/geodata-hartford-ct
+## Also see readme.txt in 01-geojson/.
 D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
 
 ##### read data previously extracted from CTDPH pdf files
