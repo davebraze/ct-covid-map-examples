@@ -257,18 +257,21 @@ p0  <-
 
 map.positivity.ggplotly <-
     ggplotly(p0,
-             layerData=2, ## default = 1
+             layerData=1, ## 1 or 2 accepted, but have no effect on hover behavior
              tooltip=c("text")) %>%
     config(showTips=FALSE,
            displayModeBar=FALSE,        # hide plotly menubar
-           scrollZoom=FALSE             # disable zooming?
+           scrollZoom=FALSE,            # disable zooming?
+           autosizeable=FALSE,
+           fillFrame=TRUE               # correct issue with poor initial zoom
            ) %>%
     layout(hovermode = "closest",
            hoverlabel = list(bgcolor="darkgreen",
                              bordercolor="black",
                              font=list(color="white", family="sans-serif", size=15)
                              ),
-           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\nin Connecticut Towns\nfor period ending",
+           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\n",
+                                     "in Connecticut Towns\nfor period ending",
                                      format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
                         x = 0,
                         xanchor = "left",
@@ -277,6 +280,7 @@ map.positivity.ggplotly <-
                         pad = list(b=10, l=10, r=10, t=100))) %>%
     hide_legend()                       # no effect
 
+plotly_json(map.positivity.ggplotly)
 fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
 saveWidget(map.positivity.ggplotly, file=fqfname)
 
@@ -285,6 +289,7 @@ saveWidget(map.positivity.ggplotly, file=fqfname)
 ## interactive choropleth with plot_ly ##
 #########################################
 
+## use geojson instead of shapefile
 
 tmp1 <-
     ct.covid.positivity.0 %>%
@@ -295,25 +300,6 @@ tmp1 <- left_join(D.geojson, tmp1, by=c("name" = "Town")) %>%
                        "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
                        "\nPopulation: ", formatC(pop.2010, format="d"),
                        "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
-## mutate(text=map(paste(
-##            paste0("<b>", name, "</b>"),
-##         paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
-##         paste0("Population: ", formatC(pop.2010, format="d")),
-##         paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
-##         sep="<br>"),
-##         htmltools::HTML))
-
-## tmp0 <-
-##     ct.covid.positivity.0 %>%
-##     select(Town, town.positivity, pop.2010, tests.10k)
-
-## tmp1 <-
-##     D.shape %>%
-##     left_join(tmp0, by=c("NAME10" = "Town")) %>%
-##     mutate(text=paste0("<b>", NAME10, "</b>",
-##             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-##             "\nPopulation: ", formatC(pop.2010, format="d"),
-##             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
 
 map.positivity.plotly  <-
     plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
@@ -333,7 +319,8 @@ map.positivity.plotly  <-
                              bordercolor="black",
                              font=list(color="white", family = "sans-serif", size=15)
                              ),
-           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\nin Connecticut Towns\nfor period ending",
+           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\n",
+                                     "in Connecticut Towns\nfor period ending",
                                      format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
                         x = 0,
                         xanchor = "left",
