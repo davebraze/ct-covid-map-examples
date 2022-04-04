@@ -37,15 +37,18 @@ source(here("locals.R"))
 ##### GIS data for CT is available here:
 ## http://magic.lib.uconn.edu/connecticut_data.html
 ##
-## Must first download the relevant shape files by hand, unzip them, and then load them up.
 ## URL for town shape files is here: http://magic.lib.uconn.edu/magic_2/vector/37800/townct_37800_0000_2010_s100_census_1_shp.zip
-ct.shp <-
+##
+## These shapefiles include outlines for CT towns in the form of multipolygons. It turns out that these won't work with leaflet. So, I've used the geojson files below for leaflet maps.
+D.shape <-
     sf::st_read(here("02-shapefiles/CT/townct_37800_0000_2010_s100_census_1_shp/townct_37800_0000_2010_s100_census_1_shp/nad83",
                            "townct_37800_0000_2010_s100_census_1_shp_nad83_feet.shp")) %>%
     filter(NAME10 != "County subdivisions not defined") %>%
     mutate(LAT = as.numeric(INTPTLAT10),
            LON = as.numeric(INTPTLON10))
 
+## Read geojson file including outlines of connecticut towns. I need to chase down where I got it.
+D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
 
 ##### read data previously extracted from CTDPH pdf files
 covid <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
@@ -112,7 +115,7 @@ ct.covid <-
     left_join(town.info, by=c("Town" = "name")) %>%
     mutate(town.cases.10k = (10000/pop.2010)*town.cases,
            town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
-    left_join(ct.shp, by=c("Town" = "NAME10"))
+    left_join(D.shape, by=c("Town" = "NAME10"))
 
 ##### state wide counts
 ## tests.complete info does not seem to be anywhere in any of the covid-19 data sets provided by the
@@ -285,7 +288,7 @@ tmp0 <-
     select(Town, town.positivity, pop.2010, tests.10k)
 
 tmp1 <-
-    ct.shp %>%
+    D.shape %>%
     left_join(tmp0, by=c("NAME10" = "Town")) %>%
     mutate(text=paste0("<b>", NAME10, "</b>",
             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
@@ -338,13 +341,11 @@ map.positivity.plotly  <-
 
 ## Read geojson file with sf::st_read()
 
-D <- st_read(here("02-geojson", "ct-towns.geojson"))
-
 tmp1 <-
     ct.covid.positivity.0 %>%
     select(Town, town.positivity, pop.2010, tests.10k)
 
-D <- left_join(D, tmp1, by=c("name" = "Town")) %>%
+D <- left_join(D.geojson, tmp1, by=c("name" = "Town")) %>%
     mutate(text=map(paste(
                paste0("<b>", name, "</b>"),
             paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
