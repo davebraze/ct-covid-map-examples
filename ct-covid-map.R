@@ -53,7 +53,7 @@ D.shape <-
 D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
 
 ##### read data previously extracted from CTDPH pdf files
-covid <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
+covid.pdf <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
 
 ##################################################
 ## Use the Socrata API to access state DPH data ##
@@ -142,7 +142,7 @@ ct.summary.wide <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
            probabledeathscum = as.integer(probabledeaths)) %>%
     select(-c(state, confirmeddeaths, probabledeaths, confirmedcases, probablecases), -starts_with("cases_"))
 
-tmp <- covid %>%
+tmp <- covid.pdf %>%
     select(Date, tests.complete) %>%
     distinct()
 
