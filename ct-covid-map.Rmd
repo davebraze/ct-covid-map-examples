@@ -92,7 +92,9 @@ map.positivity.ggplotly
 
 This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
 
-I don't care for how the tooltips only deploy when the mouse approaches the center of a polygon. It should pop up when the mouse is over any part of a polygon.
+I don't care for how the tooltips only deploy when the mouse approaches the center of a town/polygon. It should pop up when the mouse is over any part of a town.
+
+I also don't like the initial scale of the map (too small). Need to see if that's fixable.
 
 # Plot_ly
 
