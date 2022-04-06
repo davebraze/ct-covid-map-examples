@@ -379,7 +379,7 @@ map.positivity.leaflet <-
         pal = pal,
         values = ~town.positivity,
         title = "<b>Test Positivity (%)</b>",
-        opacity = 1
+        opacity = 1,
     )
 
 ## leafletOptions()
