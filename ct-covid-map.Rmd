@@ -25,7 +25,8 @@ library(FDBpub)
 
 theme_set(FDBpub::theme_fdbplot(base_size=10))
 
-theme_update(axis.text = element_blank(),
+theme_update(axis.line = element_blank(),
+             axis.text = element_blank(),
              axis.ticks = element_blank(),
              panel.grid = element_blank(),
              panel.border = element_blank())
@@ -70,7 +71,7 @@ map.positivity
 
 ### **Notes** 
 
-This is a non-interactive map built with basic ggplot2 functions. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L239).
+This is a non-interactive map built with basic ggplot2 functions. 
 
 I am using a shapefile-based set of multipolygons for the town outlines. These are probably higher resolution than needed. It might be possible to reduce size (and load time) of the dashboard if I switched to the lower resolution geojson-based polygons that I'm using with leaflet.
 
@@ -90,11 +91,9 @@ map.positivity.ggplotly
 
 ### **Notes** 
 
-This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/376660487a1f06cc69f6328af0281eaf60aec6b0/ct-covid-map.R#L286).
+This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. 
 
 I don't care for how the tooltips only deploy when the mouse approaches the center of a town/polygon. It should pop up when the mouse is over any part of a town.
-
-I also don't like the initial scale of the map (too small). Need to see if that's fixable.
 
 # Plot_ly
 
@@ -112,7 +111,7 @@ map.positivity.plotly
 
 ### **Notes**
 
-Interactive choropleth via plotly::plot_ly(). See code [here](https://github.com/davebraze/ct-covid-map-examples/blob/fec840cb5a8cb5298897ea62d1ddf496f33be333/ct-covid-map.R#L313)
+Interactive choropleth via plotly::plot_ly(). 
 
 I'm using  a geojson-based set of polygons for town outlines in this map. Plot_ly() gets the aspect ratio wrong if using the shapefile-based set of multipolygons that I used with ggplot() and ggplotly() maps. I'm not sure why.
 
@@ -134,7 +133,7 @@ map.positivity.leaflet
 
 ### **Notes**
 
-Interactive choropleth via leaflet::leaflet(). See code [here](). 
+Interactive choropleth via leaflet::leaflet(). 
 
 Previous plots in this series used multipolygon shapes for towns taken from conventional shape files. I couldn't get that to work with leaflet and so switched to simple polygons. These were read from geojson files, but I think the crucial difference is multipolygon vs. somple polygons. 
 
