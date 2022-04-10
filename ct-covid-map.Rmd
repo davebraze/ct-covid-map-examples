@@ -151,6 +151,8 @@ Covid data for these figures was compiled by CT Dept. of Public Health through `
 
 Figures were created by David Braze (davebraze@gmail.com) using R statistical software and released under the Creative Commons v4.0 CC-by license.
 
+You can always find the most current version of this data sketch online at: https://davebraze.github.io/ct-covid-map-examples/ . 
+
 ## Column {data-width=33}
 
 ### About the Author
