@@ -241,7 +241,6 @@ ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
        units=units,
        dpi=dpi)
 
-
 ###################################################
 ## interactive choropleth via ggplot >> ggplotly ##
 ###################################################
@@ -270,8 +269,8 @@ map.positivity.ggplotly <-
                              bordercolor="black",
                              font=list(color="white", family="sans-serif", size=15)
                              ),
-           title = list(text = paste("<b>10 Day Average Covid-19 Test Positivity\n",
-                                     "in Connecticut Towns\nfor period ending",
+           title = list(text = paste0("<b>10 Day Average Covid-19 Test Positivity\n",
+                                     "in Connecticut Towns\nfor period ending ",
                                      format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
                         x = 0,
                         xanchor = "left",
