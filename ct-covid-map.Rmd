@@ -73,27 +73,9 @@ map.positivity
 
 This is a non-interactive map built with basic ggplot2 functions. 
 
-I am using a shapefile-based set of multipolygons for the town outlines. These are probably higher resolution than needed. It might be possible to reduce size (and load time) of the dashboard if I switched to the lower resolution geojson-based polygons that I'm using with leaflet.
+I am using a shapefile-based set of multipolygons for the town outlines. 
 
-# GGplotly
-
-## Column {data-width=750}
-
-### **GGplotly**
-	
-```{r ggplotly}
-
-map.positivity.ggplotly
-
-```
-
-## Column {data-width=250}
-
-### **Notes** 
-
-This is a plotly interactive map created by submitting the previous ggplot2 map to the plotly::ggplotly() function. 
-
-I don't care for how the tooltips only deploy when the mouse approaches the center of a town/polygon. It should pop up when the mouse is over any part of a town.
+On the following tabs, I've created interactive versions of this same figure using plotly::plot_ly() and leaflet::leaflet().
 
 # Plot_ly
 
@@ -111,9 +93,11 @@ map.positivity.plotly
 
 ### **Notes**
 
-Interactive choropleth via plotly::plot_ly(). 
+Interactive choropleth with plotly::plot_ly(). 
 
 I'm using  a geojson-based set of polygons for town outlines in this map. Plot_ly() gets the aspect ratio wrong if using the shapefile-based set of multipolygons that I used with ggplot() and ggplotly() maps. I'm not sure why.
+
+Also, the shapefiles are probably higher resolution than needed. Using the lower res geojson polygons saves nearly 3mb on the total file size.
 
 # Leaflet
 
@@ -121,7 +105,7 @@ I'm using  a geojson-based set of polygons for town outlines in this map. Plot_l
 
 ### **Leaflet** 
 
-`r paste("10 Day Average Covid-19 Test Positivity in Connecticut Towns\nfor period ending", format(max(ct.covid$Date), "%B %d, %Y"))`
+`r paste("<p style='font-size:20px; font-family:sans-serif; font-weight:bold '>10 Day Average Covid-19 Test Positivity<br>in Connecticut Towns<br>for period ending", format(max(ct.covid$Date), "%B %d, %Y"), "</p>") `
 
 ```{r leaflet}
 
@@ -137,13 +121,13 @@ Interactive choropleth via leaflet::leaflet().
 
 Previous plots in this series used multipolygon shapes for towns taken from conventional shape files. I couldn't get that to work with leaflet and so switched to simple polygons. These were read from geojson files, but I think the crucial difference is multipolygon vs. somple polygons. 
 
-I don't know why the colorscale in the legend is inverted. Needs to be fixed.
+I don't know why the colorscale in the legend is inverted relative to expectations. It's annoying, but there doesn't seem to be a way to correct it. A couple of "solutions" I've seen proposed on StackOverflow just don't work. 
 
-Leaflet maps don't provide a "title" feature, as such. Here, I've just added the title text above the map. Could use some basic formatting.
+Leaflet maps don't provide a "title" feature, as such. Here, I've just added the title text above the map. Formatting is by way of the `<font>` tag. It's not best practice, but it works.
 
 # About
 
-## Column {data-width=33}
+## Column {data-width=333}
 
 ### About the Maps
 
@@ -153,7 +137,7 @@ Figures were created by David Braze (davebraze@gmail.com) using R statistical so
 
 You can always find the most current version of this data sketch online at: https://davebraze.github.io/ct-covid-map-examples/ . 
 
-## Column {data-width=33}
+## Column {data-width=333}
 
 ### About the Author
 
@@ -163,7 +147,7 @@ David Braze is a researcher and consultant with a background in linguistics and 
 |   website: [davebraze.org](https://davebraze.org/ "D. Braze's website")
 
 
-## Column {data-width=33}
+## Column {data-width=333}
 
 ### About the Software
 
