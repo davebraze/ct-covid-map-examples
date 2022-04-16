@@ -55,6 +55,14 @@ source(here::here("ct-covid-map.R"))
 
 ```
 
+# Intro
+
+Choropleth maps are a way to show the geographic distribution of a statistic of interest (e.g., population density, household income) using color or shading. These maps provide an easy way to visualize how a variable differs across geographic areas, like states, counties, or towns.
+
+In the tabs that follow, I've built three versions of choropleth maps depicting the 10 day average Covid-19 test postivity rate for Connecticut's 169 towns. The first is a static map built using basic functions from the {ggplot2} package. The next two are interactive maps. You can hover the mouse over each town for more detail. One was built using the ***R*** package {plotly}, the other with the {leaflet} package. Both of these rely on external javascript tools to do the actual work.
+
+This data sketch is about choropleths as a data visualization method. It is not about Covid-19, as such. Those data were chosen just because they make a handy example. 
+
 # GGplot
 
 ## Column {data-width=750}
