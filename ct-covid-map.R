@@ -171,17 +171,13 @@ ct.covid.positivity.0 <-
            town.positivity = positive.sum/tests.sum*100) %>%
     filter(Date == ending.date)
 
+##### Basic data with simple polygons for town boundaries.
 
-if(FALSE) {
-
-    ## towns ranked by positivity rate
+tmp1 <-
     ct.covid.positivity.0 %>%
-        ggplot(aes(x=fct_reorder(Town, town.positivity), y=town.positivity)) +
-        geom_point(aes(size=tests.10k), alpha=1/3) +
-        background_grid(major="xy")
+    select(Town, town.positivity, pop.2010, tests.10k)
 
-}
-
+D <- left_join(D.geojson, tmp1, by=c("name" = "Town"))
 
 ##### constants for ggplot
 
@@ -241,67 +237,25 @@ ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
        units=units,
        dpi=dpi)
 
-###################################################
-## interactive choropleth via ggplot >> ggplotly ##
-###################################################
+#########################################
+## interactive choropleth with plot_ly ##
+#########################################
 
 ## Here are a couple of tutorials that may
 ## help make better maps, although they're a bit dated:
 ## • https://blog.cpsievert.me/2018/03/30/visualizing-geo-spatial-data-with-sf-and-plotly/
 ## • https://plotly-r.com/maps.html
 
-p0  <-
-    map.positivity +
-    theme(legend.position="top")
-
-map.positivity.ggplotly <-
-    ggplotly(p0,
-             layerData=1, ## 1 or 2 accepted, but have no effect on hover behavior
-             tooltip=c("text")) %>%
-    config(showTips=FALSE,
-           displayModeBar=FALSE,        # hide plotly menubar
-           scrollZoom=FALSE,            # disable zooming?
-           autosizeable=FALSE,
-           fillFrame=TRUE               # correct issue with poor initial zoom
-           ) %>%
-    layout(hovermode = "closest",
-           hoverlabel = list(bgcolor="darkgreen",
-                             bordercolor="black",
-                             font=list(color="white", family="sans-serif", size=15)
-                             ),
-           title = list(text = paste0("<b>10 Day Average Covid-19 Test Positivity\n",
-                                     "in Connecticut Towns\nfor period ending ",
-                                     format(max(ct.covid$Date), "%B %d, %Y"), "</b>"),
-                        x = 0,
-                        xanchor = "left",
-                        yanchor = "top",
-                        margin = list(t=100),
-                        pad = list(b=10, l=10, r=10, t=100))) %>%
-    hide_legend()                       # no effect
-
-plotly_json(map.positivity.ggplotly)
-fqfname <- fs::path(fig.path, fs::path_ext_set(paste0(today, "map-positivity-ggplotly"), "html"))
-saveWidget(map.positivity.ggplotly, file=fqfname)
-
-
-#########################################
-## interactive choropleth with plot_ly ##
-#########################################
-
 ## use geojson instead of shapefile
 
-tmp1 <-
-    ct.covid.positivity.0 %>%
-    select(Town, town.positivity, pop.2010, tests.10k)
-
-tmp1 <- left_join(D.geojson, tmp1, by=c("name" = "Town")) %>%
-    mutate(text=paste0("<b>", name, "</b>",
-                       "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-                       "\nPopulation: ", formatC(pop.2010, format="d"),
-                       "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
+D.plotly <-
+    D %>% mutate(text=paste0("<b>", name, "</b>",
+                             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+                             "\nPopulation: ", formatC(pop.2010, format="d"),
+                             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
 
 map.positivity.plotly  <-
-    plot_ly(data=tmp1,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
+    plot_ly(data=D.plotly,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
             hoverinfo='text',
             hoveron='fills',
             text=~text) %>%
@@ -344,23 +298,19 @@ map.positivity.plotly  <-
 
 ## Use geojson with leaflet, not shapefiles. Shapefiles don't work with leaflet.
 
-tmp1 <-
-    ct.covid.positivity.0 %>%
-    select(Town, town.positivity, pop.2010, tests.10k)
-
-D <- left_join(D.geojson, tmp1, by=c("name" = "Town")) %>%
-    mutate(text=map(paste(
-               paste0("<b>", name, "</b>"),
-            paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
-            paste0("Population: ", formatC(pop.2010, format="d")),
-            paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
-            sep="<br>"),
-            htmltools::HTML))
+D.leaflet <-
+    D %>% mutate(text=map(paste(
+                     paste0("<b>", name, "</b>"),
+                     paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
+                     paste0("Population: ", formatC(pop.2010, format="d")),
+                     paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
+                     sep="<br>"),
+                     htmltools::HTML))
 
 pal <- colorNumeric("magma", NULL)
 
 map.positivity.leaflet <-
-    leaflet(data=D) %>%
+    leaflet(data=D.leaflet) %>%
     setView(lng=-72.8, lat=41.5, zoom=9) %>%
     addPolygons(color="lightgrey",      # stroke color
                 stroke = TRUE,
