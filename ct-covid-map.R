@@ -2,26 +2,16 @@ library(httr)
 library(XML)
 library(here)
 library(fs)
-library(RCurl)
-library(readr)
 library(purrr)
 library(sf)
 library(RSocrata)
 
 library(stringr)
 library(lubridate)
-library(wordstonumbers)
-library(forcats)
 library(dplyr)
 
-## library(ggplot2)
-library(ggpmisc)
 library(plotly)
 library(leaflet)
-library(htmlwidgets)
-library(htmltools)
-## library(FDBpub)
-
 
 source(here("locals.R"))
 
@@ -119,45 +109,6 @@ ct.covid <-
            town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
     left_join(D.shape, by=c("Town" = "NAME10"))
 
-##### state wide counts
-## tests.complete info does not seem to be anywhere in any of the covid-19 data sets provided by the
-## state up until late May. The only way to get it is to extract it from their daily reports (pdf
-## files).
-
-ct.summary.wide <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
-                           app_token=socrata.app.token) %>%
-    rename(Date = date,
-           Cases.0 = totalcases,
-           Hospitalized.0 = hospitalizedcases,
-           Deaths.0 = totaldeaths,
-           `Tests.0` = covid_19_tests_reported) %>%
-    mutate(Date = as.Date(Date),
-           `Tests.0` = as.integer(`Tests.0`),
-           Cases.0 = as.integer(Cases.0),
-           Deaths.0 = as.integer(Deaths.0),
-           Hospitalized.0 = as.integer(Hospitalized.0),
-           confirmedcasescum = as.integer(confirmedcases),
-           probablecasescum = as.integer(probablecases),
-           confirmeddeathscum = as.integer(confirmeddeaths),
-           probabledeathscum = as.integer(probabledeaths)) %>%
-    select(-c(state, confirmeddeaths, probabledeaths, confirmedcases, probablecases), -starts_with("cases_"))
-
-tmp <- covid.pdf %>%
-    select(Date, tests.complete) %>%
-    distinct()
-
-ct.summary.wide <- left_join(ct.summary.wide, tmp, by="Date") %>%
-    arrange(Date) %>%
-    mutate(`Tests.0` = if_else(is.na(`Tests.0`), tests.complete, `Tests.0`)) %>%
-    select(-tests.complete) %>%
-    mutate(Cases = c(NA, diff(Cases.0)),
-           Deaths = c(NA, diff(Deaths.0)),
-           `Tests Reported` = c(NA, diff(`Tests.0`)),
-           Hospitalized = Hospitalized.0,
-           `Test Positivity (percent)` = if_else(Date < as.Date("2020-07-01"),
-                                       as.numeric(NA),
-                                       Cases/`Tests Reported`*100)
-           ) ## Handful of x<0 after this. Let it be.
 
 ## configure the data
 ct.covid.positivity.0 <-
@@ -334,3 +285,8 @@ map.positivity.leaflet <-
 ## leafletOptions()
 ## tileOptions()
 ## previewColors(colorNumeric("magma", 1:20), 1:20)
+
+
+p <- tibble(pkgs=funspotr::spot_pkgs(here("ct-covid-map.R")))
+f <- funspotr::spot_funs(here("ct-covid-map.R"))
+dplyr::anti_join(p,f, by="pkgs")
