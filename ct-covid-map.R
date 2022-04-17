@@ -2,26 +2,16 @@ library(httr)
 library(XML)
 library(here)
 library(fs)
-library(RCurl)
-library(readr)
 library(purrr)
 library(sf)
 library(RSocrata)
 
 library(stringr)
 library(lubridate)
-library(wordstonumbers)
-library(forcats)
 library(dplyr)
 
-## library(ggplot2)
-library(ggpmisc)
 library(plotly)
 library(leaflet)
-library(htmlwidgets)
-library(htmltools)
-## library(FDBpub)
-
 
 source(here("locals.R"))
 
@@ -55,30 +45,6 @@ D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
 ##### read data previously extracted from CTDPH pdf files
 covid.pdf <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
 
-##################################################
-## Use the Socrata API to access state DPH data ##
-##################################################
-
-socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
-
-##### cases and deaths by town
-
-## Upon reviewing the data provided by CT on Nov. 1 2020, for the first time since mid-May, there
-## have been some changes to the variables in the Town data file. Need to sort that out before
-## pushing new data to the web. Metadata for the Town dataset can be found here
-## https://data.ct.gov/Health-and-Human-Services/COVID-19-Tests-Cases-and-Deaths-By-Town-/28fr-iqnx
-## OR https://data.ct.gov/resource/28fr-iqnx
-
-covid.api <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
-                          app_token=socrata.app.token) %>%
-    rename(Town = town,
-           town.cases = towntotalcases) %>%
-    mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
-           across(starts_with("people", ignore.case=FALSE), as.integer),
-           across(starts_with("number", ignore.case=FALSE), as.integer),
-           Date = as.Date(lastupdatedate))
-
-
 ##### scrape town/county data from wikipedia
 
 ########### FIXME: STASH THIS TABLE LOCALLY AND USE THAT UNLESS WP PAGE IS UPDATED #########
@@ -111,53 +77,33 @@ if (FALSE) {
 
 }
 
-## Merge shapes covid data
-ct.covid <-
-    covid.api %>%
+##################################################
+## Use the Socrata API to access state DPH data ##
+##################################################
+
+socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
+
+##### cases and deaths by town
+
+## Upon reviewing the data provided by CT on Nov. 1 2020, there
+## have been some changes to the variables in the Town data file. Need to sort that out.
+## Metadata for the Town dataset can be found here
+## https://data.ct.gov/Health-and-Human-Services/COVID-19-Tests-Cases-and-Deaths-By-Town-/28fr-iqnx
+## OR https://data.ct.gov/resource/28fr-iqnx
+
+ct.covid <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
+                          app_token=socrata.app.token) %>%
+    rename(Town = town,
+           town.cases = towntotalcases) %>%
+    mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
+           across(starts_with("people", ignore.case=FALSE), as.integer),
+           across(starts_with("number", ignore.case=FALSE), as.integer),
+           Date = as.Date(lastupdatedate)) %>%
     left_join(town.info, by=c("Town" = "name")) %>%
     mutate(town.cases.10k = (10000/pop.2010)*town.cases,
            town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
     left_join(D.shape, by=c("Town" = "NAME10"))
 
-##### state wide counts
-## tests.complete info does not seem to be anywhere in any of the covid-19 data sets provided by the
-## state up until late May. The only way to get it is to extract it from their daily reports (pdf
-## files).
-
-ct.summary.wide <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
-                           app_token=socrata.app.token) %>%
-    rename(Date = date,
-           Cases.0 = totalcases,
-           Hospitalized.0 = hospitalizedcases,
-           Deaths.0 = totaldeaths,
-           `Tests.0` = covid_19_tests_reported) %>%
-    mutate(Date = as.Date(Date),
-           `Tests.0` = as.integer(`Tests.0`),
-           Cases.0 = as.integer(Cases.0),
-           Deaths.0 = as.integer(Deaths.0),
-           Hospitalized.0 = as.integer(Hospitalized.0),
-           confirmedcasescum = as.integer(confirmedcases),
-           probablecasescum = as.integer(probablecases),
-           confirmeddeathscum = as.integer(confirmeddeaths),
-           probabledeathscum = as.integer(probabledeaths)) %>%
-    select(-c(state, confirmeddeaths, probabledeaths, confirmedcases, probablecases), -starts_with("cases_"))
-
-tmp <- covid.pdf %>%
-    select(Date, tests.complete) %>%
-    distinct()
-
-ct.summary.wide <- left_join(ct.summary.wide, tmp, by="Date") %>%
-    arrange(Date) %>%
-    mutate(`Tests.0` = if_else(is.na(`Tests.0`), tests.complete, `Tests.0`)) %>%
-    select(-tests.complete) %>%
-    mutate(Cases = c(NA, diff(Cases.0)),
-           Deaths = c(NA, diff(Deaths.0)),
-           `Tests Reported` = c(NA, diff(`Tests.0`)),
-           Hospitalized = Hospitalized.0,
-           `Test Positivity (percent)` = if_else(Date < as.Date("2020-07-01"),
-                                       as.numeric(NA),
-                                       Cases/`Tests Reported`*100)
-           ) ## Handful of x<0 after this. Let it be.
 
 ## configure the data
 ct.covid.positivity.0 <-
@@ -334,3 +280,11 @@ map.positivity.leaflet <-
 ## leafletOptions()
 ## tileOptions()
 ## previewColors(colorNumeric("magma", 1:20), 1:20)
+
+
+if(FALSE) {
+    ## check for unused packages
+    p <- tibble(pkgs=funspotr::spot_pkgs(here("ct-covid-map.R")))
+    f <- funspotr::spot_funs(here("ct-covid-map.R"))
+    dplyr::anti_join(p,f, by="pkgs")
+}
