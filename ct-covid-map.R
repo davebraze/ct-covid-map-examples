@@ -45,30 +45,6 @@ D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
 ##### read data previously extracted from CTDPH pdf files
 covid.pdf <- readRDS(file=here("03-other-source-data", "pdf-reports.rds"))
 
-##################################################
-## Use the Socrata API to access state DPH data ##
-##################################################
-
-socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
-
-##### cases and deaths by town
-
-## Upon reviewing the data provided by CT on Nov. 1 2020, for the first time since mid-May, there
-## have been some changes to the variables in the Town data file. Need to sort that out before
-## pushing new data to the web. Metadata for the Town dataset can be found here
-## https://data.ct.gov/Health-and-Human-Services/COVID-19-Tests-Cases-and-Deaths-By-Town-/28fr-iqnx
-## OR https://data.ct.gov/resource/28fr-iqnx
-
-covid.api <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
-                          app_token=socrata.app.token) %>%
-    rename(Town = town,
-           town.cases = towntotalcases) %>%
-    mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
-           across(starts_with("people", ignore.case=FALSE), as.integer),
-           across(starts_with("number", ignore.case=FALSE), as.integer),
-           Date = as.Date(lastupdatedate))
-
-
 ##### scrape town/county data from wikipedia
 
 ########### FIXME: STASH THIS TABLE LOCALLY AND USE THAT UNLESS WP PAGE IS UPDATED #########
@@ -101,9 +77,28 @@ if (FALSE) {
 
 }
 
-## Merge shapes covid data
-ct.covid <-
-    covid.api %>%
+##################################################
+## Use the Socrata API to access state DPH data ##
+##################################################
+
+socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
+
+##### cases and deaths by town
+
+## Upon reviewing the data provided by CT on Nov. 1 2020, there
+## have been some changes to the variables in the Town data file. Need to sort that out.
+## Metadata for the Town dataset can be found here
+## https://data.ct.gov/Health-and-Human-Services/COVID-19-Tests-Cases-and-Deaths-By-Town-/28fr-iqnx
+## OR https://data.ct.gov/resource/28fr-iqnx
+
+ct.covid <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
+                          app_token=socrata.app.token) %>%
+    rename(Town = town,
+           town.cases = towntotalcases) %>%
+    mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
+           across(starts_with("people", ignore.case=FALSE), as.integer),
+           across(starts_with("number", ignore.case=FALSE), as.integer),
+           Date = as.Date(lastupdatedate)) %>%
     left_join(town.info, by=c("Town" = "name")) %>%
     mutate(town.cases.10k = (10000/pop.2010)*town.cases,
            town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
@@ -287,6 +282,9 @@ map.positivity.leaflet <-
 ## previewColors(colorNumeric("magma", 1:20), 1:20)
 
 
-p <- tibble(pkgs=funspotr::spot_pkgs(here("ct-covid-map.R")))
-f <- funspotr::spot_funs(here("ct-covid-map.R"))
-dplyr::anti_join(p,f, by="pkgs")
+if(FALSE) {
+    ## check for unused packages
+    p <- tibble(pkgs=funspotr::spot_pkgs(here("ct-covid-map.R")))
+    f <- funspotr::spot_funs(here("ct-covid-map.R"))
+    dplyr::anti_join(p,f, by="pkgs")
+}
