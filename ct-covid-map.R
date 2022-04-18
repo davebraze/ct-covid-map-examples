@@ -120,16 +120,15 @@ ct.covid <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
 
 ##### Basic data with multipolygons for town boundaries.
 D.shp <-
-    ct.covid %>%
-    select(Town, town.positivity, pop.2010, tests.10k) %>%
-    left_join(D.shape, by=c("Town" = "NAME10"))
-
+    D.shape %>%
+    left_join(ct.covid, by=c("NAME10" = "Town")) %>%
+    select("Town" = "NAME10", town.positivity, pop.2010, tests.10k, geometry)
 
 ##### Basic data with simple polygons for town boundaries.
 D.gj <-
-    ct.covid %>%
-    select(Town, town.positivity, pop.2010, tests.10k) %>%
-    left_join(D.geojson, by=c("Town" = "name"))
+    D.geojson %>%
+    left_join(ct.covid, by=c("name" = "Town")) %>%
+    select("Town" = "name", town.positivity, pop.2010, tests.10k, geometry)
 
 ##### constants for ggplot
 
@@ -149,7 +148,7 @@ dpi <- 300
 
 ## ggplot::geom_sf
 breaks.0 <- c(0,2,4,6,8,10,12,14,16,18,20)
-shade.0 <- max(D$town.positivity)*.5
+shade.0 <- max(D.shp$town.positivity)*.5
 
 map.positivity.cap <- paste("Ten Day Average Covid-19 Test Positivity for each Connecticut Town.",
                             "Test Positivity is the percentage of tests administered in a town",
@@ -201,7 +200,7 @@ map.positivity.plotly  <-
             hoveron='fills',
             text=~text) %>%
     add_sf(
-        split=~name,                  # hover text seems determined by split variable
+        split=~Town,                  # hover text seems determined by split variable
         color=~town.positivity,
         colors="magma",                 # set colorscale
         alpha=1,
