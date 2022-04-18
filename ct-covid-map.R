@@ -37,7 +37,7 @@ D.shape <-
     mutate(LAT = as.numeric(INTPTLAT10),
            LON = as.numeric(INTPTLON10))
 
-## Read geojson file including outlines of connecticut towns.
+##### Read geojson file including outlines of connecticut towns.
 ## File downloaded from here: https://github.com/HandsOnDataViz/geodata-hartford-ct
 ## Also see readme.txt in 01-geojson/.
 D.geojson <- st_read(here("01-geojson", "ct-towns.geojson"))
@@ -66,7 +66,8 @@ if (FALSE) {
                county = str_replace(county, "County", "Co."),
                pop.2010.bin = cut(pop.2010,
                                   breaks=c(0, 5000, 15000, 35000, 75000, Inf),
-                                  labels=c("less than 5,000", "5k, <15k", "15k, <35k", "35k, <75k", "75,000 or more"),
+                                  labels=c("less than 5,000", "5k, <15k", "15k, <35k",
+                                           "35k, <75k", "75,000 or more"),
                                   ordered_result=TRUE))
 
     saveRDS(town.info, file = here("03-other-source-data", "town-info.rds"))
@@ -92,7 +93,7 @@ socrata.app.token <- Sys.getenv("SOCRATA_APP_TOKEN_CTCOVID19")
 ## OR https://data.ct.gov/resource/28fr-iqnx
 
 ct.covid <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
-                          app_token=socrata.app.token) %>%
+                         app_token=socrata.app.token) %>%
     rename(Town = town,
            town.cases = towntotalcases) %>%
     mutate(across(starts_with("town", ignore.case=FALSE), as.integer),
@@ -102,14 +103,9 @@ ct.covid <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
     left_join(town.info, by=c("Town" = "name")) %>%
     mutate(town.cases.10k = (10000/pop.2010)*town.cases,
            town.deaths.10k = (10000/pop.2010)*towntotaldeaths) %>%
-    left_join(D.shape, by=c("Town" = "NAME10"))
-
-
-## configure the data
-ct.covid.positivity.0 <-
-    ct.covid %>%
+    ## left_join(D.shape, by=c("Town" = "NAME10")) %>%
     group_by(Town) %>%
-    slice_max(Date, n=11) %>%           # use 11 days instead of 10 so as to catch test count on 1st of 10 days of interest
+    slice_max(Date, n=11) %>%           # Use 11 day window bcz need test count on 10 days.
     mutate(ending.date = max(Date),
            positive.sum = diff(range(numberofpositives)),
            tests.sum = diff(range(numberoftests)),
@@ -117,13 +113,23 @@ ct.covid.positivity.0 <-
            town.positivity = positive.sum/tests.sum*100) %>%
     filter(Date == ending.date)
 
+######## Merge covid data with alternative sets of town geometries.
+######## In addition to the multi/polygon difference, there
+######## also seems to be a diff in the CRS defaults encoded
+######## in the two sets of geometries.
+
+##### Basic data with multipolygons for town boundaries.
+D.shp <-
+    ct.covid %>%
+    select(Town, town.positivity, pop.2010, tests.10k) %>%
+    left_join(D.shape, by=c("Town" = "NAME10"))
+
+
 ##### Basic data with simple polygons for town boundaries.
-
-tmp1 <-
-    ct.covid.positivity.0 %>%
-    select(Town, town.positivity, pop.2010, tests.10k)
-
-D <- left_join(D.geojson, tmp1, by=c("name" = "Town"))
+D.gj <-
+    ct.covid %>%
+    select(Town, town.positivity, pop.2010, tests.10k) %>%
+    left_join(D.geojson, by=c("Town" = "name"))
 
 ##### constants for ggplot
 
@@ -143,28 +149,19 @@ dpi <- 300
 
 ## ggplot::geom_sf
 breaks.0 <- c(0,2,4,6,8,10,12,14,16,18,20)
-shade.0 <- max(ct.covid.positivity.0$town.positivity)*.5
+shade.0 <- max(D$town.positivity)*.5
 
 map.positivity.cap <- paste("Ten Day Average Covid-19 Test Positivity for each Connecticut Town.",
                             "Test Positivity is the percentage of tests administered in a town",
                             "that had a positive result.")
 
 map.positivity <-
-    ct.covid.positivity.0 %>%
-    select(town.positivity, geometry, Town, pop.2010, tests.10k, LAT, LON) %>%
+    D.shp %>%
+    ## select(town.positivity, geometry, Town, pop.2010, tests.10k) %>%
     ggplot() +
     geom_sf(aes(fill=town.positivity,
                 geometry=geometry),
             color="white", size=.33) +
-    geom_sf_text(aes(label="", geometry=geometry,
-                  ## label=formatC(town.positivity, format="f", digits=2),
-                  ## color=town.positivity<shade.0,
-                  ## 'text' is used for the plotly tooltip
-                  text=paste0("<b>", Town, "</b>",
-                              "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-                              "\nPopulation: ", formatC(pop.2010, format="d"),
-                              "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))),
-              size=1.5, show.legend=FALSE) +
     scale_color_manual(values=c("black", "white")) +
     viridis::scale_fill_viridis(option="magma",
                                 breaks=breaks.0,
@@ -194,15 +191,13 @@ ggsave(filename=fs::path_ext_set(paste0(today, "map-positivity"), ftype),
 
 ## use geojson instead of shapefile
 
-D.plotly <-
-    D %>% mutate(text=paste0("<b>", name, "</b>",
-                             "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
-                             "\nPopulation: ", formatC(pop.2010, format="d"),
-                             "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)))
-
 map.positivity.plotly  <-
-    plot_ly(data=D.plotly,                  # plot_ly and plot_geo both get coordinate system wrong in different ways (cf. ggplotly)
-            hoverinfo='text',
+    D.gj %>%
+    mutate(text=paste0("<b>", Town, "</b>",
+                       "\nTest Pos: ", formatC(town.positivity, format="f", digits=2), "%",
+                       "\nPopulation: ", formatC(pop.2010, format="d"),
+                       "\nTests/10k/day: ", formatC(tests.10k/10, format="f", digits=2))) %>%
+    plot_ly(hoverinfo='text',
             hoveron='fills',
             text=~text) %>%
     add_sf(
@@ -244,19 +239,18 @@ map.positivity.plotly  <-
 
 ## Use geojson with leaflet, not shapefiles. Shapefiles don't work with leaflet.
 
-D.leaflet <-
-    D %>% mutate(text=map(paste(
-                     paste0("<b>", name, "</b>"),
+pal <- colorNumeric("magma", NULL)
+
+map.positivity.leaflet <-
+    D.gj %>%
+    mutate(text=map(paste(
+                     paste0("<b>", Town, "</b>"),
                      paste0("Test Pos: ", formatC(town.positivity, format="f", digits=2), "%"),
                      paste0("Population: ", formatC(pop.2010, format="d")),
                      paste0("Tests/10k/day: ", formatC(tests.10k/10, format="f", digits=2)),
                      sep="<br>"),
-                     htmltools::HTML))
-
-pal <- colorNumeric("magma", NULL)
-
-map.positivity.leaflet <-
-    leaflet(data=D.leaflet) %>%
+                     htmltools::HTML)) %>%
+    leaflet() %>%
     setView(lng=-72.8, lat=41.5, zoom=9) %>%
     addPolygons(color="lightgrey",      # stroke color
                 stroke = TRUE,
