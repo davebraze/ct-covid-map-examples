@@ -1,5 +1,5 @@
 
-<meta name="description" content="Graphs of Connecticut DPH Covid-19 data.">
+<meta name="description" content="Summary of Connecticut DPH Covid-19 data.">
 <meta name="robots" content="index, follow">
 
 <!-- play with setting these properties for my site to see if there's anything useful here -->

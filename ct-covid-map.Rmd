@@ -57,11 +57,20 @@ source(here::here("ct-covid-map.R"))
 
 # Intro
 
+## Column {data-width=333}
+
+## Column {data-width=333}
+
 Choropleth maps are a way to show the geographic distribution of a statistic of interest (e.g., population density, household income) using color or shading. These maps provide an easy way to visualize how a variable differs across geographic areas, like states, counties, or towns.
 
-In the tabs that follow, I've built three versions of choropleth maps depicting the 10 day average Covid-19 test postivity rate for Connecticut's 169 towns. The first is a static map built using basic functions from the {ggplot2} package. The next two are interactive maps. You can hover the mouse over each town for more detail. One was built using the ***R*** package {plotly}, the other with the {leaflet} package. Both of these rely on external javascript tools to do the actual work.
+In the tabs that follow, I've built choropleth maps depicting the 10 day average Covid-19 test postivity rate for Connecticut's 169 towns using three different toolkits. The first is a static map built using basic functions from the ***R*** package {ggplot2}. The next two are interactive maps. You can hover the mouse over each town for more detail. One was built using the ***R*** package {plotly}, the other with the {leaflet} package. Both of these rely on external javascript tools to do the actual work.
 
 This data sketch is about choropleths as a data visualization method. It is not about Covid-19, as such. Those data were chosen just because they make a handy example. 
+
+You can always find the most current version of this data sketch online  [here](https://davebraze.github.io/ct-covid-map-examples/). The code used to build that page is on github [here](https://github.com/davebraze/ct-covid-map-examples).
+
+## Column {data-width=333}
+
 
 # GGplot
 
@@ -131,7 +140,7 @@ Previous plots in this series used multipolygon shapes for towns taken from conv
 
 I don't know why the colorscale in the legend is inverted relative to expectations. It's annoying, but there doesn't seem to be a way to correct it. A couple of "solutions" I've seen proposed on StackOverflow just don't work. 
 
-Leaflet maps don't provide a "title" feature, as such. Here, I've just added the title text above the map. Formatting is by way of the `<font>` tag. It's not best practice, but it works.
+Leaflet maps don't provide a "title" feature, as such. Here, I've just added the title text above the map. Formatting is by way of the HTML `<font>` tag. It's not best practice, but it works.
 
 # About
 

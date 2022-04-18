@@ -41,8 +41,8 @@ flex:
 
 html2web: 
 # make html page suitable for web deployment & put it in '/docs/' folder
-	sed '/CT Achievement Gap: NAEP 4th Grade Reading Scores/ r gtag.js' < $(fname).html > tmp0.html ## insert google analytics tag
-	sed '/CT Achievement Gap: NAEP 4th Grade Reading Scores/ r html-meta.txt' < tmp0.html > index.html ## insert meta tags
+	sed '/CT COVID Map: Variations/ r gtag.js' < $(fname).html > tmp0.html ## insert google analytics tag below page title
+	sed '/CT COVID Map: Variations/ r html-meta.txt' < tmp0.html > index.html ## insert meta tags below page title
 	mv --backup index.html ./docs/.
 	rm -f tmp0.html
 
