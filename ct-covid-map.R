@@ -12,6 +12,9 @@ library(dplyr)
 
 library(plotly)
 library(leaflet)
+## Also look into ggiraph::, highcharter::, echarts4r::, and charter::.
+## I'm not sure if any of these do choropleths.
+
 
 source(here("locals.R"))
 
