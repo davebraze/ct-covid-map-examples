@@ -148,11 +148,14 @@ Leaflet maps don't provide a "title" feature, as such. Here, I've just added the
 
 ### About the Maps
 
-Covid data used in these maps was compiled by CT Dept. of Public Health through `r format(max(ct.covid$Date), "%b %d, %Y")` and accessed through https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library.
+Covid data used in these maps was compiled by CT Dept. of Public Health through `r format(max(ct.covid$Date), "%b %d, %Y")` and accessed through [https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library](https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/#data-library).
 
 Maps were created by David Braze (davebraze@gmail.com) using R statistical software and released under the Creative Commons v4.0 CC-by license.
 
-You can always find the most current version of this data sketch online at: https://davebraze.github.io/ct-covid-map-examples/. 
+You can always find the most current version of this data sketch online at: [https://davebraze.github.io/ct-covid-map-examples/](https://davebraze.github.io/ct-covid-map-examples/). 
+
+The code used to build this dashboard and the maps it contains can be found on github at: [https://github.com/davebraze/ct-covid-map-examples](https://github.com/davebraze/ct-covid-map-examples).
+
 
 ## Column {data-width=333}
 
